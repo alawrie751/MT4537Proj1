@@ -7,13 +7,21 @@
 # Source the Functions ------
 
 # Note that this also loads the spatstat library
-source("sim_funcs.R")
+source("src/sim_funcs.R")
 
 # Create 2 Simulations, Clip to Window and Fit Models ------
 
-sim1 <- ThomasSimul(30, 0.1, 200)
-sim2 <- ThomasSimul(45, 0.05, 465)
+sim1 <- ThomasSimul(30, 0.1, rand_seed = 200)
+sim2 <- ThomasSimul(45, 0.05, rand_seed = 465)
 
+# Save plots of these simulations
+pdf(file = "results/simplots/plot_sim1.pdf")
+plot(sim1, main = "Plot of the First Simulation from a Thomas Cluster Process")
+dev.off()
+
+pdf(file = "results/simplots/plot_sim2.pdf")
+plot(sim2, main = "Plot of the Second Simulation from a Thomas Cluster Process")
+dev.off()
 
 ## Clip to window ##
 

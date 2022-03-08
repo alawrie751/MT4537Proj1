@@ -18,11 +18,12 @@ library(spatstat)
 #   full_sim - ppp object which is a simulation from a homogeneous Poisson 
 #              with intensity equal to the maximum intensity seen across the
 #              window
+#   xylim - limit of the window in both the x and y directions (positive number)
 
 # Outputs:
 #   ppp object containing the thinned simulation from a Thomas process
 
-thin_sim <- function(intense, full_sim) {
+thin_sim <- function(intense, full_sim, xylim) {
   
   # Create variables to store a vector containing the points being kept
   new_x <- NULL
@@ -41,8 +42,8 @@ thin_sim <- function(intense, full_sim) {
   
   for (i in 1:nvals) {
     
-    # Find probability density at the given point then sample a bernoulli variable
-    # with probability of 1 equal to this probability
+    # Find probability density at the given point then sample a Bernoulli 
+    # variable with probability of 1 equal to this probability
     prob <- prob_dens(xvals[i], yvals[i])
     ind <- rbinom(1, 1, prob)
     
@@ -57,7 +58,7 @@ thin_sim <- function(intense, full_sim) {
   }
   
   # Convert to a spatstat ppp object and return
-  thinned <- ppp(new_x, new_y, window = owin(c(0,1), c(0, 1)))
+  thinned <- ppp(new_x, new_y, window = owin(c(0, xylim), c(0, xylim)))
   
   return(thinned)
   
@@ -73,13 +74,15 @@ thin_sim <- function(intense, full_sim) {
 #   mu_p - mean of parent distribution (positive number)
 #   sd_c - standard deviation of symmetric normal distribution of children
 #          around parents (positive number)
+#   xylim - limit of the window in both the x and y directions (positive number,
+#           has a default value of 1)
 #   rand_seed - number to set the random seed to to allow reproducibility of
 #               simulations (number, has an arbitrary default of 150)
 
 # Outputs:
 #   ppp object containing the simulation from a Thomas process
 
-ThomasSimul <- function(mu_p, sd_c, rand_seed = 150) {
+ThomasSimul <- function(mu_p, sd_c, xylim = 1, rand_seed = 150) {
   
   # Set random seed to allow reproducibility of simulations 
   set.seed(rand_seed)
@@ -88,13 +91,13 @@ ThomasSimul <- function(mu_p, sd_c, rand_seed = 150) {
   num_p <- rpois(1, mu_p)
   
   # Randomly generate coordinates for each of the num_p points, with equal 
-  # probability everywhere in the region of [0, 10] in each direction
-  x_p <- runif(num_p, 0, 1)
-  y_p <- runif(num_p, 0, 1)
-  #plot(x_p, y_p, xlim = c(0, 1), ylim = c(0, 1))
+  # probability everywhere in the region of [0, xylim] in each direction
+  x_p <- runif(num_p, 0, xylim)
+  y_p <- runif(num_p, 0, xylim)
+  #plot(x_p, y_p, xlim = c(0, xylim), ylim = c(0, xylim))
   
   # Convert to a spatstat ppp object
-  loc_p <- ppp(x_p, y_p, window = owin(c(0,1), c(0, 1)))
+  loc_p <- ppp(x_p, y_p, window = owin(c(0, xylim), c(0, xylim)))
   
   # Calculate the driving intensity using Gaussian densities placed at each
   # parent location with standard deviation given by sd_c
@@ -102,11 +105,10 @@ ThomasSimul <- function(mu_p, sd_c, rand_seed = 150) {
   
   # Create sample of a homogeneous Poisson process with density equal to the
   # highest seen in the derived driving intensity above
-  large_sim <- rpoispp(max(drive_intense), win = owin(c(0,1), c(0, 1)))
+  large_sim <- rpoispp(max(drive_intense), win = owin(c(0, xylim), c(0, xylim)))
   
-  # Thin this using probability given by the driving intensity divided by the 
-  # maximum driving intensity (re-scale to the range (0, 1))
-  thinned_sim <- thin_sim(drive_intense / max(drive_intense), large_sim)
+  # Thin this using the thinning function described above
+  thinned_sim <- thin_sim(drive_intense, large_sim, xylim)
   
   return(thinned_sim)
   
