@@ -84,6 +84,16 @@ thin_sim <- function(intense, full_sim, xylim) {
 
 ThomasSimul <- function(mu_p, sd_c, xylim = 1, rand_seed = 150) {
   
+  # Error traps to ensure that user inputs are valid
+  if (!is.numeric(mu_p)) stop("invalid arguments. mu_p must be a numeric")
+  if (!is.numeric(sd_c)) stop("invalid arguments. sd_c must be a numeric")
+  if (!is.numeric(xylim)) stop("invalid arguments. xylim must be a numeric")
+  if (!is.numeric(rand_seed)) stop("invalid arguments. rand_seed must be a numeric")
+  
+  if (mu_p <= 0) stop("invalid arguments. mu_p must be > 0")
+  if (sd_c <= 0) stop("invalid arguments. sd_c must be > 0")
+  if (xylim <= 0) stop("invalid arguments. xylim must be > 0")
+  
   # Set random seed to allow reproducibility of simulations 
   set.seed(rand_seed)
   
