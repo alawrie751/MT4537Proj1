@@ -38,8 +38,46 @@ pdf(file = "results/initialintenseplots/initial_small.pdf")
 plot(small_band)
 dev.off()
 
+# Fit Models Using ppm for x and y ------
+
+mod_stat <- ppm(dat ~ 1)
+
+mod_x_y <- ppm(dat ~ x + y)
+
+mod_xy <- ppm(dat ~ x * y)
+
+mod_poly2_xy <- ppm(dat ~ poly(x, 2) + poly(y, 2))
+
+mod_poly3_xy <- ppm(dat ~ poly(x, 3) + poly(y, 3))
+
+mod_poly6_xy <- ppm(dat ~ poly(x, 6) + poly(y, 6))
+
+par(mfrow = c(2, 2), mar = c(0.5, 0.5, 0.5, 0.5))
+plot(predict(mod_poly2_xy))
+plot(predict(mod_poly3_xy))
+plot(predict(mod_poly6_xy))
+plot(density(dat, sigma = 50))
+
+pdf(file = "results/ppmmodels/best_xy.pdf")
+plot(predict(mod_poly6_xy), main = "Model Fitted with Polynomial of Degree 6")
+dev.off()
+
+# Fit Models Using ppm for Elevation and Gradient ------
+
+mod_elev <- ppm(dat ~ elev, data = dat_extra)
+
+mod_grad <- ppm(dat ~ grad, data = dat_extra)
+
+mod_g_e <- ppm(dat ~ elev + grad, data = dat_extra)
+
+mod_ge <- ppm(dat ~ elev * grad, data = dat_extra)
+
+pdf(file = "results/ppmmodels/best_ge.pdf")
+plot(predict(mod_ge), main = "Model Fitted with the Interaction of these Terms")
+dev.off()
 
 
-
+datPCF <- pcfinhom(dat, mod_ge, correction = "translate")
+datPCF_sim <- pcfinhom(simulate(mod_ge, nsim = 1)[[1]], mod_ge, correction = "translate")
 
 
