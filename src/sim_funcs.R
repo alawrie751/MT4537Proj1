@@ -120,7 +120,7 @@ ThomasSimul <- function(mu_p, sd_c, xylim = 1, rand_seed = 150) {
   # Thin this using the thinning function described above
   thinned_sim <- thin_sim(drive_intense, large_sim, xylim)
   
-  return(thinned_sim)
+  return(list(thin_sim = thinned_sim, intense = drive_intense))
   
 }
 

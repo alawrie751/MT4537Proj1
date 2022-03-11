@@ -1,0 +1,338 @@
+\documentclass[11pt,a4paper,oneside]{memoir}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{microtype}
+\usepackage[dvips]{graphicx}
+\usepackage{xcolor}
+\usepackage{helvet}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[labelfont=bf]{caption}
+\usepackage{natbib} % n.b. fixed since panopto video 
+\usepackage{listings}
+\usepackage[
+breaklinks=true,colorlinks=true,
+%linkcolor=blue,urlcolor=blue,citecolor=blue,% PDF VIEW
+linkcolor=black,urlcolor=black,citecolor=black,% PRINT
+bookmarks=true,bookmarksopenlevel=2]{hyperref}
+
+\usepackage{geometry}
+
+\OnehalfSpacing
+%\linespread{1.3}
+
+%%% CHAPTER'S STYLE
+%\chapterstyle{bianchi}
+\chapterstyle{brotherton}
+%\chapterstyle{madsen}
+%\chapterstyle{ell}
+
+%%% STYLE OF PAGES NUMBERING
+\pagestyle{plain}
+\makepagestyle{plain}
+\makeevenfoot{plain}{\thepage}{}{}
+\makeoddfoot{plain}{}{}{\thepage}
+\makeevenhead{plain}{}{}{}
+\makeoddhead{plain}{}{}{}
+
+\maxsecnumdepth{subsection} % chapters, sections, and subsections are numbered
+\maxtocdepth{subsection} % chapters, sections, and subsections are in the Table of Contents
+
+\begin{document}
+
+%   TITLEPAGE
+%
+%   due to variety of titlepage schemes it is probably better to make titlepage manually
+
+\thispagestyle{empty}
+
+{%%%
+
+\centering
+\Large
+
+~\vspace{\fill}
+
+{\huge 
+MT4537 - Spatial Statistics
+}
+
+\vspace{2.5cm}
+
+{\LARGE
+Project 1 - Simulation and Model Fitting
+}
+
+\vspace{3.5cm}
+
+\vspace{3.5cm}
+
+\vspace{\fill}
+
+\date{December 2021}
+
+%%%
+}%%%
+
+\cleardoublepage
+%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%
+%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%
+
+\tableofcontents*
+
+\clearpage
+
+%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%
+%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%
+
+%\begin{figure}[h]
+ % \includegraphics[width=0.15\textwidth] {signature.jpg}
+ % \label{fig:signature}
+%\end{figure}
+
+
+\chapter{Simulation}
+
+\textbf{\textit{The \emph{R} code associated with this project is provided in a GitHub repository which contains a README file that explains the layout of the relevant files and it can be accessed using the following link: https://github.com/alawrie751/MT4537Proj1}}
+
+\section{Description of the Simulation Process}
+
+This section provides a description of the process followed to create the simulation algorithm for a Thomas cluster process by deriving a random driving intensity and then using thinning to create a given realisation. For reference, the code for the simulation algorithm is contained in the \emph{src/simul\textunderscore funcs.R} file.
+
+\subsection{Usability and Reproducibility}
+
+The simulation algorithm is written using functions within \emph{R} since this allows the simulations to be re-run multiple times easily and without having to repeat code. Making use of functions allowed inputs to be created that let the user control some elements of the simulations. These inputs included the mean of the distribution of the number of parents, the bandwidth used in creating the driving intensity, the dimension of the square in which the process would be simulated and a random seed.   
+
+Initially, there is a set of input checks which are just there to improve usability of the function. It ensures the user inputs are valid to reduce the chance of unexplained errors later in the process. The data type and limitations for each input is described above the function. The next step was to set the random seed. This allows the results of the simulation (ie. the realizations) to be reproduced if the same inputs are given to the function. If this was not included then the realizations would be different every time the function is run, even if all the other inputs remained the same. 
+
+\subsection{Parent Points}
+\label{section:parents}
+
+Moving on to the distribution of the "parent" points, the theory of Neyman-Scott processes assumes that the parent points are generated from a homogeneous Poisson process. This means the number of these parent points can be given by a single random draw from a Poisson distribution. This is exactly what has been implemented in the simulation algorithm where the mean of this distribution is controlled by a user input which can be manipulated as required.
+
+The next step is to place the required number of parent points randomly and independently across the region. Since these parents come from a homogeneous process they have equal probability of being placed anywhere within the region which implies that they can be placed using random draws from a uniform distribution. This is done in the algorithm by taking the given number of random draws from a uniform distribution with limits given by the length of the region to give the $x$-coordinates and another set of similar random draws giving the $y$-coordinates. These random draws were stored as vectors with equal length and converted to a \emph{spatstat ppp} object for use in the next step. 
+
+A driving intensity was then derived using the randomly located parent points as the centres of Gaussian densities which were symmetric in every direction. These densities have a single parameter $\sigma$ which is the standard deviation of the normal distribution being placed at each parent point. This can be controlled by the user and changed to fit the situation being simulated. This driving intensity was created using the \emph{density} function from \emph{spatstat} using Gaussian kernels and the \emph{sigma} parameter as described above. 
+ 
+Now we will consider a short example of this part of the algorithm. The  \emph{R} code used for this example is contained in Section \ref{section:egcode} of the Appendix. First, set the seed to $123$ and simulate a value from a Poisson distribution with mean $11$. This returns a value of $9$ parent points. The next step is to generate the $x$- and $y$-coordinates for each of these points using random draws from a uniform distribution in the range $[0, 1]$. This returns vectors for the $x$-coordinate and the $y$-coordinate, the values of which are contained in Table \ref{tab:egxy}. These points can be plotted as seen on the left in Figure \ref{fig:eg1}. The final step in this section of the algorithm is to devise the driving intensity from these parent points by placing symmetric Gaussian densities at these parent points with a standard deviation of $0.1$. This intensity can be seen on the right side of Figure \ref{fig:eg1}.
+ 
+\begin{table}[h!]
+\centering
+    \begin{tabular}{|c||c|c|c|c|c|c|c|c|c|}
+    \hline
+      x & $0.409$ & $0.883$ & $0.940$ & $0.046$ & $0.528$ & $0.892$ & $0.551$ & $0.457$ & $0.957$\\
+      \hline
+      y & $0.453$ & $0.678$ & $0.573$ & $0.103$ & $0.900$ & $0.246$ & $0.042$ & $0.328$ & $0.955$\\
+      \hline
+    \end{tabular}
+    \caption{$x$- and $y$-coordinate values used in the example in Section \ref{section:parents}.}
+    \label{tab:egxy}
+\end{table}
+ 
+\begin{figure}[h!]
+  \centering
+  \subfloat{\includegraphics[width=0.49\textwidth]{par_eg1.pdf}}
+  \hfill
+  \subfloat{\includegraphics[width=0.49\textwidth]{intense_eg1.pdf}}
+  \caption{This contains the plots for the example in Section \ref{section:parents}. The left hand plot is the parent points and the right hand plot is the resulting driving intensity using Gaussian densities and a standard deviation of $0.1$. This was completed in a unit square.}
+  \label{fig:eg1}
+\end{figure}
+ 
+\subsection{Thinning}
+
+\section{Realisations from the Simulation}
+
+\begin{figure}[h!]
+  \centering
+  \subfloat{\includegraphics[width=0.49\textwidth]{intense_sim1.pdf}}
+  \hfill
+  \subfloat{\includegraphics[width=0.49\textwidth]{plot_sim1.pdf}}
+  \caption{This contains the plots for the first realisation from the simulation of a Thomas cluster process. The left hand plot is the driving intensity and the right hand plot is the resulting set of spatially distributed points. This was simulated in a unit square.}
+  \label{fig:sim1}
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
+  \subfloat{\includegraphics[width=0.49\textwidth]{intense_sim2.pdf}}
+  \hfill
+  \subfloat{\includegraphics[width=0.49\textwidth]{plot_sim2.pdf}}
+  \caption{This contains the plots for the second realisation from the simulation of a Thomas cluster process. The left hand plot is the driving intensity and the right hand plot is the resulting set of spatially distributed points. This was simulated in a unit square.}
+  \label{fig:sim2}
+\end{figure}
+
+\chapter{Model Fitting}
+
+\section{Model Output and Comparison}
+
+
+
+
+
+\appendix
+
+\chapter{R Code}
+\label{section:code}
+
+\section{Parent Example}
+\label{section:egcode}
+
+\begin{lstlisting}[language = R]
+
+# Code used for the example in Section 1.1.2
+
+library(statpat)
+
+set.seed(123)
+
+num_p <- rpois(1, 11)
+
+x_p <- runif(num_p, 0, 1)
+y_p <- runif(num_p, 0, 1)
+
+plot(x_p, y_p, xlim = c(0, 1), ylim = c(0, 1), xlab = "x", ylab = "y", 
+     main = "Plot of Parent Points for the Example")
+
+loc_par <- ppp(x_p, y_p, window = owin(c(0, 1), c(0, 1)))
+
+drive_intense <- density(loc_par, sigma = 0.1, kernel = "gaussian")
+
+plot(drive_intense, main = "Plot of the Driving Intensity for the 
+     Example")
+
+\end{lstlisting}
+
+\section{Simulation Functions}
+
+\begin{lstlisting}[language = R]
+
+# Description ------
+
+# Script containing the functions to carry out the simulations for the first
+# part of the project
+
+# Load Packages ------
+
+library(spatstat)
+
+# Thinning Function ------
+
+# Function to thin a simulation from a homogeneous Poisson process to an 
+# inhomogeneous Poisson process simulation
+
+# Inputs:
+#   intense - intensity given by the density function from spatstat
+#   full_sim - ppp object which is a simulation from a homogeneous Poisson 
+#              with intensity equal to the maximum intensity seen across the
+#              window
+#   xylim - limit of the window in both the x and y directions (positive number)
+
+# Outputs:
+#   ppp object containing the thinned simulation from a Thomas process
+
+thin_sim <- function(intense, full_sim, xylim) {
+  
+  # Create variables to store a vector containing the points being kept
+  new_x <- NULL
+  new_y <- NULL
+  
+  # Extract the x and y values into vectors and find the length of the vectors
+  xvals <- full_sim$x
+  yvals <- full_sim$y
+  
+  nvals <- length(xvals)
+  
+  # Convert the derived intensity function to the range [0, 1] and then convert 
+  # it to a function type so that the value of the density at (x, y) is 
+  # extracted easily
+  prob_dens <- as.function(intense / max(intense))
+  
+  for (i in 1:nvals) {
+    
+    # Find probability density at the given point then sample a Bernoulli 
+    # variable with probability of 1 equal to this probability
+    prob <- prob_dens(xvals[i], yvals[i])
+    ind <- rbinom(1, 1, prob)
+    
+    # If the indicator is 1 then keep the given point and add it to the vector
+    if (ind == 1) {
+      
+      new_x <- c(new_x, xvals[i])
+      new_y <- c(new_y, yvals[i])
+      
+    }
+    
+  }
+  
+  # Convert to a spatstat ppp object and return
+  thinned <- ppp(new_x, new_y, window = owin(c(0, xylim), c(0, xylim)))
+  
+  return(thinned)
+  
+}
+
+
+# Thomas Simulation Function ------
+
+# Function to run the simulation of a Thomas cluster process using the 
+# thinning function above
+
+# Inputs:
+#   mu_p - mean of parent distribution (positive number)
+#   sd_c - standard deviation of symmetric normal distribution of children
+#          around parents (positive number)
+#   xylim - limit of the window in both the x and y directions (positive number,
+#           has a default value of 1)
+#   rand_seed - number to set the random seed to to allow reproducibility of
+#               simulations (number, has an arbitrary default of 150)
+
+# Outputs:
+#   ppp object containing the simulation from a Thomas process
+
+ThomasSimul <- function(mu_p, sd_c, xylim = 1, rand_seed = 150) {
+  
+  # Error traps to ensure that user inputs are valid
+  if (!is.numeric(mu_p)) stop("invalid arguments. mu_p must be a numeric")
+  if (!is.numeric(sd_c)) stop("invalid arguments. sd_c must be a numeric")
+  if (!is.numeric(xylim)) stop("invalid arguments. xylim must be a numeric")
+  if (!is.numeric(rand_seed)) stop("invalid arguments. rand_seed must be a numeric")
+  
+  if (mu_p <= 0) stop("invalid arguments. mu_p must be > 0")
+  if (sd_c <= 0) stop("invalid arguments. sd_c must be > 0")
+  if (xylim <= 0) stop("invalid arguments. xylim must be > 0")
+  
+  # Set random seed to allow reproducibility of simulations 
+  set.seed(rand_seed)
+  
+  # Randomly select number of parents from Poisson distribution of mean mu_p
+  num_p <- rpois(1, mu_p)
+  
+  # Randomly generate coordinates for each of the num_p points, with equal 
+  # probability everywhere in the region of [0, xylim] in each direction
+  x_p <- runif(num_p, 0, xylim)
+  y_p <- runif(num_p, 0, xylim)
+  #plot(x_p, y_p, xlim = c(0, xylim), ylim = c(0, xylim))
+  
+  # Convert to a spatstat ppp object
+  loc_p <- ppp(x_p, y_p, window = owin(c(0, xylim), c(0, xylim)))
+  
+  # Calculate the driving intensity using Gaussian densities placed at each
+  # parent location with standard deviation given by sd_c
+  drive_intense <- density(loc_p, sigma = sd_c, kernel = "gaussian")
+  
+  # Create sample of a homogeneous Poisson process with density equal to the
+  # highest seen in the derived driving intensity above
+  large_sim <- rpoispp(max(drive_intense), win = owin(c(0, xylim), c(0, xylim)))
+  
+  # Thin this using the thinning function described above
+  thinned_sim <- thin_sim(drive_intense, large_sim, xylim)
+  
+  return(list(thin_sim = thinned_sim, intense = drive_intense))
+  
+}
+
+
+\end{lstlisting}
+
+
+\end{document}
+
