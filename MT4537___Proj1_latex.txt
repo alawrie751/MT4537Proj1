@@ -114,7 +114,7 @@ The next step is to place the required number of parent points randomly and inde
 
 A driving intensity was then derived using the randomly located parent points as the centres of Gaussian densities which were symmetric in every direction. These densities have a single parameter $\sigma$ which is the standard deviation of the normal distribution being placed at each parent point. This can be controlled by the user and changed to fit the situation being simulated. This driving intensity was created using the \emph{density} function from \emph{spatstat} using Gaussian kernels and the \emph{sigma} parameter as described above. 
  
-Now we will consider a short example of this part of the algorithm. The  \emph{R} code used for this example is contained in Section \ref{section:egcode} of the Appendix. First, set the seed to $123$ and simulate a value from a Poisson distribution with mean $11$. This returns a value of $9$ parent points. The next step is to generate the $x$- and $y$-coordinates for each of these points using random draws from a uniform distribution in the range $[0, 1]$. This returns vectors for the $x$-coordinate and the $y$-coordinate, the values of which are contained in Table \ref{tab:egxy}. These points can be plotted as seen on the left in Figure \ref{fig:eg1}. The final step in this section of the algorithm is to devise the driving intensity from these parent points by placing symmetric Gaussian densities at these parent points with a standard deviation of $0.1$. This intensity can be seen on the right side of Figure \ref{fig:eg1}.
+Now we will consider a short example of this part of the algorithm. The \emph{R} code used for this example is contained in Section \ref{section:egcode} of the Appendix. First, set the seed to $123$ and simulate a value from a Poisson distribution with mean $11$. This returns a value of $9$ parent points. The next step is to generate the $(x, y)$-coordinates for each of these $9$ points using random draws from a uniform distribution in the range $[0, 1]$. This returns vectors for the $x$-coordinate and the $y$-coordinate, the values of which are contained in Table \ref{tab:egxy}. These points can be plotted as seen on the left in Figure \ref{fig:eg1}. The final step in this section of the algorithm is to devise the driving intensity from these parent points by placing symmetric Gaussian densities at these parent points with a standard deviation of $0.1$. This intensity can be seen on the right side of Figure \ref{fig:eg1}.
  
 \begin{table}[h!]
 \centering
@@ -139,8 +139,39 @@ Now we will consider a short example of this part of the algorithm. The  \emph{R
 \end{figure}
  
 \subsection{Thinning}
+\label{section:thinning}
+
+The thinning section of the algorithm took part in a separate function to avoid the main simulation function becoming too crowded. This function took as inputs the driving intensity based on the parent points derived in the previous step and the length of the sides of the square being simulated in.
+
+This thinning process is completed by first generating a sample from a homogeneous Poisson process using the \emph{rpoispp()} function from the \emph{spatstat} library this time. The intensity for this homogeneous Poisson process is given by the maximum intensity value observed in the derived driving intensity that came from the parent points and is generated in the same window as specified earlier. 
+
+The thinning step is then applied to this realisation of the homogeneous Poisson process. Two empty vectors are created to store the $(x, y)$-coordinates that are to kept as points in the final simulation. The $(x, y)$-coordinates are extracted from the $ppp$ object created during the simulation from the homogeneous Poisson. All the values in the previously derived driving intensity are transformed to probabilities by dividing each by the maximum value of the intensity observed so they are all now in the range $[0, 1]$. Now, for each set of $(x, y)$-coordinates, a Bernoulli random variable is simulated. This has the following PDF:
+
+\begin{equation*}
+    f(x) = 
+    \begin{cases}
+        1 & \quad \text{with probability }p\\
+        0 & \quad \text{with probability } 1-p
+    \end{cases}
+\end{equation*}
+The probability $p$ of returning a value of $1$ is given by the value of the transformed density evaluated at the point under consideration. The point was kept and added to the initially empty storage vectors if a value of $1$ is returned by the Bernoulli trial and is removed (not added to the storage vectors) from the simulation if $0$ is returned. 
+
+The $(x, y)$-coordinates that are kept after the thinning process described above are then converted to a \emph{ppp} object then returned. The overall simulation function then returns a list containing these simulation points as a \emph{ppp} object and the driving intensity derived in Section \ref{section:parents}.
+
+Continuing the example from the previous section, the full simulation from a homogeneous Poisson process is created. This is shown on the left of Figure \ref{fig:eg2}. The thinning process is then applied making use of the driving intensity depicted on the right of Figure \ref{fig:eg1}. The plot on the right of Figure \ref{fig:eg2} shows all the points again but those points in red are the points that are kept as part of the simulation. All the other points are removed from the simulation. 
+
+\begin{figure}[h!]
+  \centering
+  \subfloat{\includegraphics[width=0.49\textwidth]{fullsim_eg2.pdf}}
+  \hfill
+  \subfloat{\includegraphics[width=0.49\textwidth]{thinsim_eg2.pdf}}
+  \caption{This contains the plots for the example in Section \ref{section:thinning}. The left hand plot is the simulation from the homogeneous Poisson process and the right hand plot is the thinned simulation where the red points were those that were kept as points in the simulation (the rest were removed). This was completed in a unit square.}
+  \label{fig:eg2}
+\end{figure}
 
 \section{Realisations from the Simulation}
+
+This section contains two realisations from the simulation algorithm described in the previous section. Figure \ref{fig:sim1} shows the plots from the first simulation where the mean number of parent points was $30$, the standard deviation of the Gaussian densities placed at the parent points was $0.1$, a random seed of $200$ and the simulation was completed in the unit square. The plots for the second simulation are contained in Figure \ref{fig:sim2}. This simulation was completed using a mean number of parents of $45$, standard deviation of the Gaussian densities equal to $0.05$ and a random seed of $465$. This was again simulated within the unit square.
 
 \begin{figure}[h!]
   \centering
@@ -173,14 +204,14 @@ Now we will consider a short example of this part of the algorithm. The  \emph{R
 \chapter{R Code}
 \label{section:code}
 
-\section{Parent Example}
+\section{Algorithm Example}
 \label{section:egcode}
 
 \begin{lstlisting}[language = R]
 
-# Code used for the example in Section 1.1.2
+# Code used for the example in Section 1.1.2 and 1.1.3
 
-library(statpat)
+library(spatstat)
 
 set.seed(123)
 
@@ -198,6 +229,38 @@ drive_intense <- density(loc_par, sigma = 0.1, kernel = "gaussian")
 
 plot(drive_intense, main = "Plot of the Driving Intensity for the 
      Example")
+
+full_sim <- rpoispp(max(drive_intense), win = owin(c(0, 1), c(0, 1)))
+
+plot(full_sim, main = "Plot of the Full Homogeneous Poisson Simulation")
+
+new_x <- NULL
+new_y <- NULL
+
+xvals <- full_sim$x
+yvals <- full_sim$y
+
+nvals <- length(xvals)
+
+prob_dens <- as.function(drive_intense / max(drive_intense))
+
+for (i in 1:nvals) {
+  
+  prob <- prob_dens(xvals[i], yvals[i])
+  ind <- rbinom(1, 1, prob)
+  
+  if (ind == 1) {
+    
+    new_x <- c(new_x, xvals[i])
+    new_y <- c(new_y, yvals[i])
+    
+  }
+}
+
+thinned <- ppp(new_x, new_y, window = owin(c(0, 1), c(0, 1)))
+
+plot(full_sim, main = "Plot of the Full Homogeneous Poisson Simulation")
+points(thinned, pch = 16, col = "red")
 
 \end{lstlisting}
 

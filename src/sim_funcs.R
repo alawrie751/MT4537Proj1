@@ -15,15 +15,16 @@ library(spatstat)
 
 # Inputs:
 #   intense - intensity given by the density function from spatstat
-#   full_sim - ppp object which is a simulation from a homogeneous Poisson 
-#              with intensity equal to the maximum intensity seen across the
-#              window
 #   xylim - limit of the window in both the x and y directions (positive number)
 
 # Outputs:
 #   ppp object containing the thinned simulation from a Thomas process
 
-thin_sim <- function(intense, full_sim, xylim) {
+thin_sim <- function(intense, xylim) {
+  
+  # Create sample of a homogeneous Poisson process with density equal to the
+  # highest seen in the derived driving intensity above
+  full_sim <- rpoispp(max(intense), win = owin(c(0, xylim), c(0, xylim)))
   
   # Create variables to store a vector containing the points being kept
   new_x <- NULL
@@ -113,12 +114,8 @@ ThomasSimul <- function(mu_p, sd_c, xylim = 1, rand_seed = 150) {
   # parent location with standard deviation given by sd_c
   drive_intense <- density(loc_p, sigma = sd_c, kernel = "gaussian")
   
-  # Create sample of a homogeneous Poisson process with density equal to the
-  # highest seen in the derived driving intensity above
-  large_sim <- rpoispp(max(drive_intense), win = owin(c(0, xylim), c(0, xylim)))
-  
   # Thin this using the thinning function described above
-  thinned_sim <- thin_sim(drive_intense, large_sim, xylim)
+  thinned_sim <- thin_sim(drive_intense, xylim)
   
   return(list(thin_sim = thinned_sim, intense = drive_intense))
   

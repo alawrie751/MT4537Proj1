@@ -37,11 +37,11 @@ dev.off()
 
 ## Clip to window ##
 
-thom_sim1 <- kppm(sim1, clusters = "Thomas", method = "mincon")
-mat_sim1 <- kppm(sim1, clusters = "MatClust", method = "mincon")
+thom_sim1 <- kppm(sim1$thin_sim, clusters = "Thomas", method = "mincon")
+mat_sim1 <- kppm(sim1$thin_sim, clusters = "MatClust", method = "mincon")
 
-thom_sim2 <- kppm(sim2, clusters = "Thomas", method = "mincon")
-mat_sim2 <- kppm(sim2, clusters = "MatClust", method = "mincon")
+thom_sim2 <- kppm(sim2$thin_sim, clusters = "Thomas", method = "mincon")
+mat_sim2 <- kppm(sim2$thin_sim, clusters = "MatClust", method = "mincon")
 
 
 
