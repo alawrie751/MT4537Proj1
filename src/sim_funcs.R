@@ -75,15 +75,13 @@ thin_sim <- function(intense, xylim) {
 #   mu_p - mean of parent distribution (positive number)
 #   sd_c - standard deviation of symmetric normal distribution of children
 #          around parents (positive number)
-#   xylim - limit of the window in both the x and y directions (positive number,
-#           has a default value of 1)
 #   rand_seed - number to set the random seed to to allow reproducibility of
 #               simulations (number, has an arbitrary default of 150)
 
 # Outputs:
 #   ppp object containing the simulation from a Thomas process
 
-ThomasSimul <- function(mu_p, sd_c, xylim = 1, rand_seed = 150) {
+ThomasSimul <- function(mu_p, sd_c, rand_seed = 150) {
   
   # Error traps to ensure that user inputs are valid
   if (!is.numeric(mu_p)) stop("invalid arguments. mu_p must be a numeric")
@@ -100,6 +98,9 @@ ThomasSimul <- function(mu_p, sd_c, xylim = 1, rand_seed = 150) {
   
   # Randomly select number of parents from Poisson distribution of mean mu_p
   num_p <- rpois(1, mu_p)
+  
+  # Set size of window
+  xylim <- 1
   
   # Randomly generate coordinates for each of the num_p points, with equal 
   # probability everywhere in the region of [0, xylim] in each direction

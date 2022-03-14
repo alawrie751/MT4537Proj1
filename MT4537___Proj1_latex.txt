@@ -85,15 +85,8 @@ Project 1 - Simulation and Model Fitting
 %%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%
 %%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%---%%%
 
-%\begin{figure}[h]
- % \includegraphics[width=0.15\textwidth] {signature.jpg}
- % \label{fig:signature}
-%\end{figure}
-
 
 \chapter{Simulation}
-
-\textbf{\textit{The \emph{R} code associated with this project is provided in a GitHub repository which contains a README file that explains the layout of the relevant files and it can be accessed using the following link: https://github.com/alawrie751/MT4537Proj1}}
 
 \section{Description of the Simulation Process}
 
@@ -101,7 +94,7 @@ This section provides a description of the process followed to create the simula
 
 \subsection{Usability and Reproducibility}
 
-The simulation algorithm is written using functions within \emph{R} since this allows the simulations to be re-run multiple times easily and without having to repeat code. Making use of functions allowed inputs to be created that let the user control some elements of the simulations. These inputs included the mean of the distribution of the number of parents, the bandwidth used in creating the driving intensity, the dimension of the square in which the process would be simulated and a random seed.   
+The simulation algorithm is written using functions within \emph{R} since this allows the simulations to be re-run multiple times easily and without having to repeat code. Making use of functions allowed inputs to be created that let the user control some elements of the simulations. These inputs included the mean of the distribution of the number of parents, the bandwidth used in creating the driving intensity and a random seed.   
 
 Initially, there is a set of input checks which are just there to improve usability of the function. It ensures the user inputs are valid to reduce the chance of unexplained errors later in the process. The data type and limitations for each input is described above the function. The next step was to set the random seed. This allows the results of the simulation (ie. the realizations) to be reproduced if the same inputs are given to the function. If this was not included then the realizations would be different every time the function is run, even if all the other inputs remained the same. 
 
@@ -182,6 +175,8 @@ This section contains two realisations from the simulation algorithm described i
   \label{fig:sim1}
 \end{figure}
 
+\vspace{2.5cm}
+
 \begin{figure}[h!]
   \centering
   \subfloat{\includegraphics[width=0.49\textwidth]{intense_sim2.pdf}}
@@ -191,13 +186,115 @@ This section contains two realisations from the simulation algorithm described i
   \label{fig:sim2}
 \end{figure}
 
+\section{Fitting Thomas and Matern Process Models}
+
+\subsection{Minimum Contrast Method}
+
+This is a common method used for estimating parameters for Poisson cluster processes which is based on the idea of least-squares estimation. It makes use of an estimated and theoretical summary characteristic and tries to find the parameter values which minimise the difference between these. The method can be seen as trying to minimise
+\begin{equation*}
+    \Delta(\boldsymbol{\theta}) = \int_{s_1}^{s_2}|\hat{S}(r)-S_{\boldsymbol{\theta}}(r)|^\beta dr
+\end{equation*}
+with respect to $\boldsymbol{\theta}$ where this is a vector of the parameters. The vector of parameters that minimise this expression are the estimators of the parameters. $S(r)$ is a summary characteristic depending on the distance from a point $r$. The other values included in the expression are generally arbitrary. However, it is normal practice to select $\beta$ = 2. The limits of the integration expression remain arbitrary with no standard selection for these. 
+
+In reality, the formula given above for the minimum contrast method is discretised (broken up into discrete points) to make a summation formula. This means the method now tries to minimise using
+\begin{equation*}
+    \int_{s_1}^{s_2}|\hat{S}(r)-S_{\boldsymbol{\theta}}(r)|^\beta dr \approx \sum_{i = 0}^k |\hat{S}(\gamma_i)-S_{\boldsymbol{\theta}}(\gamma_i)|^\beta
+\end{equation*}
+where $S(r)$ and  $\beta$ remained defined as above. Meanwhile, $\gamma_0 = s_1$, $\gamma_k = s_2$ and $\gamma_i = \gamma_0 + i\delta$ where $\delta = \frac{s_2-s_1}{k}$ and $k$ is a positive integer. This is just breaking the range of values for $r$ into $k + 1$ discrete points to evaluate the summary characteristic function $S(r)$ at to give the total difference. Taking the limit as $k$ tends to $\infty$ of the sum will lead back to the initial integration definition for the method. 
+
+The summary characteristics commonly used are either
+\begin{equation*}
+    S(r)=K(r) \quad \text{or} \quad S(r) = g(r)
+\end{equation*}
+where $K(r)$ is Ripley's K-function and $g(r)$ is the pair correlation function. Throughout this section the minimum contrast method will be used with $g(r)$. This is defined in terms of $K(r)$ and contains the same information as it. $K(r)$ is defined to be the mean number of distinct points found within a distance r from any given point (not including the point itself). $g(r)$ is then a summary characteristic defined to be proportional to the derivative of $K(r)$ defined previously. This can be written out as
+\begin{equation*}
+    g(r) = \frac{K'(r)}{2\pi r} \quad \text{for } r\geq 0
+\end{equation*}
+
+
+
 \chapter{Model Fitting}
 
-\section{Model Output and Comparison}
+The \emph{bei} data set contains information on the location of $3604$ trees and \emph{bei.extra} provides additional covariates showing the altitude across the region and also the gradient. A plot of the \emph{bei} data is provided on the left of Figure \ref{fig:initplot}. Here we are trying to fit a model to describe the location of the trees across the region. 
 
+\section{Kernel Smooths}
+\label{section:kernels}
 
+\begin{figure}[h!]
+  \centering
+  \subfloat{\includegraphics[width=0.49\textwidth]{beidat.pdf}}
+  \hfill
+  \subfloat{\includegraphics[width=0.49\textwidth]{initial_density.pdf}}
+  \caption{The plot on the left is the \emph{bei} data set. On the right is an initial estimate of the intensity for this data using the \emph{density} function with the arguments left at the default values.}
+  \label{fig:initplot}
+\end{figure}
 
+\vspace{0.1cm}
 
+The first step when trying to model this data is to fit a kernel smooth. This is fitted using the \emph{density.ppp} function provided in \emph{spatstat}. This function is simply placing symmetric kernels at every point in the pattern and then summing all the values of these kernels at every point. The shape and spread of the kernel can be controlled by specifying different types of kernels and specifying the bandwidth (\emph{sigma}). 
+
+The initial smooth, depicted on the right of Figure \ref{fig:initplot}, is fitted using the function defaults. It is difficult to tell with this many points which kernel is being used. Since it appears to be relatively smooth, it is unlikely to be the disc kernel but it is not easy to decide between the other three options (these being Gaussian, quartic and Epanechnikov). Looking at the help files for the function, the default kernel used is in fact the Gaussian. Again, just looking at the plot it is difficult to make any kind of guess as to the value being used for the bandwidth. However, the help files says that there is a "simple rule of thumb that depends only on the size of the window" to calculate a value for \emph{sigma} when none is specified by the user. In this case, it appears to have a value of $50$ and a window size of $1000$ by $500$ (this was concluded using trial and error). This implies the formula being used is either $0.05a$ or $0.1b$ where $a$ is longer than $b$ but this is only based on this one example. 
+
+\begin{figure}[h!]
+  \centering
+  \subfloat{\includegraphics[width=0.49\textwidth]{initial_large.pdf}}
+  \hfill
+  \subfloat{\includegraphics[width=0.49\textwidth]{initial_small.pdf}}
+  \caption{Initial estimate of the intensity for the \emph{bei} data using the \emph{density} function with Gaussian kernels but $\sigma$ equal to $200$ on the left and $20$ on the right.}
+  \label{fig:lrgsml}
+\end{figure}
+
+Figure \ref{fig:lrgsml} provides two markedly different intensity estimates. These are both also markedly different from the initial estimate using the function defaults. The only change in these intensities is the use of different values for the bandwidth. It is clear to see that the higher bandwidth leads to a much flatter intensity while the smaller value leads to a much more bumpy estimate of the intensity. 
+
+\section{Fitting Using Covariates}
+
+This section covers the model fitting process used when adding covariates into the models through the \emph{ppm} function in \emph{spatstat}. The models being fitted here are nearly equivalent to a Poisson GLM. They use a log-link since the intensity being estimated must be strictly positive.
+
+\subsection{AIC}
+
+The model selection criteria used was Akaike's Information Criterion (AIC) which is calculated as follows:
+
+\begin{equation*}
+    \centering
+    AIC = -2log[L(\hat{\theta})] + 2q
+\end{equation*}
+
+where $L(\hat{\theta})$ is the likelihood function evaluated at its maximum which are the outputs of the modelling functions. $q$ is defined to be the number of parameters estimated in the model and acts as a penalty for estimating more parameters. Model selection using AIC is carried out by selecting the model which has the lowest AIC value. 
+
+\subsection{Using Coordinates}
+
+The first model fitted was just a constant model using the formula "$bei \sim 1$". Looking at the intensity estimated in Section \ref{section:kernels} this will not be a good model which should be evident in the AIC values but this model is included for completeness. The next model fitted was one that depended on $x$ and $y$ individually using the formula "$bei \sim x+y$" which was followed by the model based on the interaction term using the formula "$bei \sim x*y$". The final three models fitted were all polynomials of degree $2, 3$ and $6$ respectively. These polynomial models include coefficients for all the powers of the coordinates up to and include the degree given. For example, the form of the polynomial model of degree $3$ is
+\begin{equation*}
+    log(\lambda(x, y)) = \beta_0 + \beta_1x+\beta_2x^2+\beta_3x^3+\beta_4y+\beta_5y^2+\beta_6y^3
+\end{equation*}
+where the $\beta_i$s are the coefficients to be estimated in the model. 
+
+The AIC values for all these models are contained in Table \ref{tab:AICxy}
+
+\begin{table}[ht]
+\centering
+    \begin{tabular}{|l|l|}
+    \hline
+       Model Formula & AIC \\
+      \hline \hline
+      $1$ & $42763.92$\\
+      \hline
+      $x+y$ & $42545.68$\\
+      \hline
+      $x*y$ & $42455.77$\\
+      \hline
+      poly($x$, $2$) + poly($y$, $2$) & $42234.23$\\
+      \hline
+      poly($x$, $3$) + poly($y$, $3$) & $42157.51$ \\
+      \hline
+      poly($x$, $6$) + poly($y$, $6$) & $41966.5$\\
+      \hline
+    \end{tabular}
+    \caption{AIC values for the models using the $(x, y)$-coordinates.}
+    \label{tab:AICxy}
+\end{table}
+
+\subsection{Using Altitude and Gradient}
 
 \appendix
 

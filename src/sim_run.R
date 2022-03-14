@@ -37,8 +37,8 @@ dev.off()
 
 ## Clip to window ##
 
-thom_sim1 <- kppm(sim1$thin_sim, clusters = "Thomas", method = "mincon")
-mat_sim1 <- kppm(sim1$thin_sim, clusters = "MatClust", method = "mincon")
+thom_sim1 <- thomas.estK(sim1$thin_sim, startpar = c(kappa = 30, scale = 0.1))
+mat_sim1 <- matclust.estK(sim1$thin_sim, startpar = c(kappa = 30, scale = 0.1))
 
 thom_sim2 <- kppm(sim2$thin_sim, clusters = "Thomas", method = "mincon")
 mat_sim2 <- kppm(sim2$thin_sim, clusters = "MatClust", method = "mincon")

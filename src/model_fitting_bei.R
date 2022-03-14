@@ -10,6 +10,10 @@ library(spatstat)
 dat <- bei
 dat_extra <- bei.extra
 
+pdf(file = "results/initialintenseplots/beidat.pdf")
+plot(bei, main = "bei data")
+dev.off()
+
 # Fit Kernel Smooth ------
 
 # Fit kernel smooth as initial estimate of intensity
@@ -20,7 +24,7 @@ pdf(file = "results/initialintenseplots/initial_density.pdf")
 plot(initial_est, main = "Initial intensity Estimate Using Function Defaults")
 dev.off()
 
-# Default kernel is gaussian so this is use since it hasn't been overridden
+# Default kernel is Gaussian so this is use since it hasn't been overridden
 
 # the bandwidth sigma is found by a "simple rule of thumb" relating only to
 # the size of the window (assuming some 0.1 * shortest side length)
