@@ -90,7 +90,7 @@ Project 1 - Simulation and Model Fitting
 
 \section{Description of the Simulation Process}
 
-This section provides a description of the process followed to create the simulation algorithm for a Thomas cluster process by deriving a random driving intensity and then using thinning to create a given realisation. For reference, the code for the simulation algorithm is contained in the \emph{src/simul\textunderscore funcs.R} file.
+This section provides a description of the process followed to create the simulation algorithm for a Thomas cluster process by deriving a random driving intensity and then using thinning to create a given realisation. For reference, the code for the simulation algorithm is contained in Section \ref{section:simulcode} of the Appendix.
 
 \subsection{Usability and Reproducibility}
 
@@ -164,7 +164,7 @@ Continuing the example from the previous section, the full simulation from a hom
 
 \section{Realisations from the Simulation}
 
-This section contains two realisations from the simulation algorithm described in the previous section. Figure \ref{fig:sim1} shows the plots from the first simulation where the mean number of parent points was $30$, the standard deviation of the Gaussian densities placed at the parent points was $0.1$, a random seed of $200$ and the simulation was completed in the unit square. The plots for the second simulation are contained in Figure \ref{fig:sim2}. This simulation was completed using a mean number of parents of $45$, standard deviation of the Gaussian densities equal to $0.05$ and a random seed of $465$. This was again simulated within the unit square.
+This section contains two realisations from the simulation algorithm described in the previous section. Figure \ref{fig:sim1} shows the plots from the first simulation where the mean number of parent points was $30$, the standard deviation of the Gaussian densities placed at the parent points was $0.1$, a random seed of $200$ and the simulation was completed in the unit square. The plots for the second simulation are contained in Figure \ref{fig:sim2}. This simulation was completed using a mean number of parents of $45$, standard deviation of the Gaussian densities equal to $0.05$ and a random seed of $465$. This was again simulated within the unit square. The code to carry out these runs of the simulation is contained in Section \ref{section:runsimul} of the Appendix.
 
 \begin{figure}[h!]
   \centering
@@ -215,7 +215,7 @@ where $K(r)$ is Ripley's K-function and $g(r)$ is the pair correlation function.
 
 \chapter{Model Fitting}
 
-The \emph{bei} data set contains information on the location of $3604$ trees and \emph{bei.extra} provides additional covariates showing the altitude across the region and also the gradient. A plot of the \emph{bei} data is provided on the left of Figure \ref{fig:initplot}. Here we are trying to fit a model to describe the location of the trees across the region. 
+The \emph{bei} data set contains information on the location of $3604$ trees and \emph{bei.extra} provides additional covariates showing the elevation across the region and also the gradient. A plot of the \emph{bei} data is provided on the left of Figure \ref{fig:initplot}. Here we are trying to fit a model to describe the location of the trees across the region. The code used to run these models is contained in Section \ref{section:modelling}.
 
 \section{Kernel Smooths}
 \label{section:kernels}
@@ -246,11 +246,13 @@ The initial smooth, depicted on the right of Figure \ref{fig:initplot}, is fitte
 
 Figure \ref{fig:lrgsml} provides two markedly different intensity estimates. These are both also markedly different from the initial estimate using the function defaults. The only change in these intensities is the use of different values for the bandwidth. It is clear to see that the higher bandwidth leads to a much flatter intensity while the smaller value leads to a much more bumpy estimate of the intensity. 
 
-\section{Fitting Using Covariates}
+\section{Fitting Poisson Process Models}
+\label{section:poismod}
 
 This section covers the model fitting process used when adding covariates into the models through the \emph{ppm} function in \emph{spatstat}. The models being fitted here are nearly equivalent to a Poisson GLM. They use a log-link since the intensity being estimated must be strictly positive.
 
 \subsection{AIC}
+\label{AICdefn}
 
 The model selection criteria used was Akaike's Information Criterion (AIC) which is calculated as follows:
 
@@ -262,14 +264,15 @@ The model selection criteria used was Akaike's Information Criterion (AIC) which
 where $L(\hat{\theta})$ is the likelihood function evaluated at its maximum which are the outputs of the modelling functions. $q$ is defined to be the number of parameters estimated in the model and acts as a penalty for estimating more parameters. Model selection using AIC is carried out by selecting the model which has the lowest AIC value. 
 
 \subsection{Using Coordinates}
+\label{section:coordsmod}
 
-The first model fitted was just a constant model using the formula "$bei \sim 1$". Looking at the intensity estimated in Section \ref{section:kernels} this will not be a good model which should be evident in the AIC values but this model is included for completeness. The next model fitted was one that depended on $x$ and $y$ individually using the formula "$bei \sim x+y$" which was followed by the model based on the interaction term using the formula "$bei \sim x*y$". The final three models fitted were all polynomials of degree $2, 3$ and $6$ respectively. These polynomial models include coefficients for all the powers of the coordinates up to and include the degree given. For example, the form of the polynomial model of degree $3$ is
+The first model fitted was just a constant model using the formula "$bei \sim 1$". Looking at the intensity estimated in Section \ref{section:kernels} it is quite clear that this will not be a good model which should be evident in the AIC values. This model was included for completeness. The next model fitted was one that depended on $x$ and $y$ individually using the formula "$bei \sim x+y$" which was followed by the model based on the interaction term using the formula "$bei \sim x*y$". The final three models fitted were all polynomials of degree $2$, $3$ and $6$ respectively. These polynomial models include coefficients for all the powers of the coordinates up to and include the degree given. For example, the form of the polynomial model of degree $3$ is
 \begin{equation*}
-    log(\lambda(x, y)) = \beta_0 + \beta_1x+\beta_2x^2+\beta_3x^3+\beta_4y+\beta_5y^2+\beta_6y^3
+    log(\mathbb{E}(\lambda(x, y))) = \beta_0 + \beta_1x+\beta_2x^2+\beta_3x^3+\beta_4y+\beta_5y^2+\beta_6y^3
 \end{equation*}
 where the $\beta_i$s are the coefficients to be estimated in the model. 
 
-The AIC values for all these models are contained in Table \ref{tab:AICxy}
+The AIC values for all these models are contained in Table \ref{tab:AICxy}. From Section \ref{AICdefn}, it is known that selection by AIC is done by choosing the model with the lowest value for the AIC. Looking at the table it can be seen that the models improve on each other as you move down the table. Therefore, the polynomial model of degree $6$ is the best of the models considered and so it should be brought forward in the modelling process. The intensity function for this model is provided in Figure \ref{fig:xymod}. This intensity does appear to pick up the rough location of the dense locations but it does not appear as dense as the kernel smooth estimated previously. 
 
 \begin{table}[ht]
 \centering
@@ -294,19 +297,200 @@ The AIC values for all these models are contained in Table \ref{tab:AICxy}
     \label{tab:AICxy}
 \end{table}
 
-\subsection{Using Altitude and Gradient}
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.6\textwidth]{best_xy.pdf}
+  \caption{Intensity plot for the best model for the $bei$ data set using only variants of the $(x, y)$-coordinates as covariates. This model was a polynomial model of degree $6$.}
+  \label{fig:xymod}
+\end{figure}
+
+\vspace{1.5cm}
+
+\subsection{Using Elevation and Gradient}
+
+In this section we look at fitting models using the extra available covariates in the data set. These include the elevation which is defined to be the elevation above sea level in metres. Meanwhile, a measure of the gradient is present at each point in the region. This is defined to be the norm of the elevation gradient so is in effect the size of the change in the elevation.  
+
+A number of different models were fitted using these covariates. Throughout this section and the rest of this report, $e$ represents the elevation and $g$ represents the gradient. The modelling process began with a model that simply depended on the elevation which was fitted using the formula "$bei \sim e$". The next model was one that was based on only the gradient this time. This used the formula "$bei \sim g$". Following on, a model depending on a linear combination of these covariates was considered using the formula "$bei \sim e+g$" which led onto the model including the interaction of these covariates given by "$bei \sim e * g$".
+
+\begin{table}[ht]
+\centering
+    \begin{tabular}{|l|l|}
+    \hline
+       Model Formula & AIC \\
+      \hline \hline
+      $e$ & $42760.49$\\
+      \hline
+      $g$ & $42382.81$\\
+      \hline
+      $e+g$ & $42295.11$\\
+      \hline
+      $e*g$ & $42229.24$ \\
+      \hline
+    \end{tabular}
+    \caption{AIC values for the models using the elevation ($e$) and gradient ($g$).}
+    \label{tab:AICeg}
+\end{table}
+
+The AIC values calculated for this set of models are given in Table \ref{tab:AICeg}. Again, the model with the lowest AIC value is said to be the best model for the data according to this selection criteria. This means that the model including the interaction term is the preferred one for this data. The fitted intensity function for this model is given on the right of Figure \ref{fig:gemod}. This does not look very hopeful as there are not many similarities to the intensity function estimated using the kernels. 
+
+\begin{table}[ht]
+\centering
+    \begin{tabular}{|l|l|}
+    \hline
+       Parameter & Coefficient \\
+      \hline \hline
+      Intercept & $-4.403$\\
+      \hline
+      $e$ & $-0.007$\\
+      \hline
+      $g$ & $-36.500$\\
+      \hline
+      $e:g$ & $0.293$ \\
+      \hline
+    \end{tabular}
+    \caption{Parameter coefficients for the model including an interaction term for the elevation ($e$) and gradient ($g$).}
+    \label{tab:pareg}
+\end{table}
+
+The parameter estimates for the model with the interaction term are contained in Table \ref{tab:pareg}. These are all based on the log of the expected value of the trees at each point depending on the elevation and gradient at these points. This means it is difficult to interpret their exact meaning. However, we can look at the signs of these estimates. The intercept term is just the base line value of the intensity when both elevation and gradient are zero. Looking at the signs of the other cofficients shows that the intensity value decreases for both higher elevation and gradient since these are both negative. On the other hand, the positive value for the interaction term implies that the value of the intensity increases as the product of the elevation and gradient values increase.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.6\textwidth]{best_ge.pdf}
+  \caption{Intensity plot for the best model for the $bei$ data set using only variants of the elevation and gradient covariates. This model was one including an interaction term.}
+  \label{fig:gemod}
+\end{figure}
+
+Figure \ref{fig:pcfeg} provides the pair correlation functions ($g(r)$) both based on the real data and simulated data from this best model selected by AIC. This left hand plot indicates that in the real data there are more points seen closer to other points than would be expected under complete spatial randomness that only depended on the location or covariates. This is part of the assumptions of the models being fitted so far as indicated by the plot on the right which stays in and around the red line which shows the constant line at $g(r) = 1$ that would be expected under complete spatial randomness. This means the models being fitted are unlikely to be a very good fit since there appears to be some clustering processes underlying the data. Also, note the different scales on the vertical axes.
+
+\begin{figure}[h!]
+  \centering
+  \subfloat{\includegraphics[width=0.49\textwidth]{pcf_real.pdf}}
+  \hfill
+  \subfloat{\includegraphics[width=0.49\textwidth]{pcf_sim.pdf}}
+  \caption{These are pair correlation functions for the $bei$ data. The plot on the left is based on the original data while the right uses data simulated from the model including the interaction term.}
+  \label{fig:pcfeg}
+\end{figure}
+
+\section{Fitting Cox Models}
+\subsection{Fitting the Model}
+
+Based on the conclusions from pair correlation function in the previous subsection, it may be useful to look at fitting Cox models. This is because the pair correlation plots appeared to indicate some clustering in the data which wasn't (and shouldn't be expected to due to the design of the models) being modelled by the Poisson process models. Cox models are designed to model the clustering processes underlying the intensity. Here we will consider only Thomas process models (assuming a Gaussian scattering at each parent point). 
+
+The preferred model from Section \ref{section:poismod} (selected by AIC) was the polynomial of degree $6$ for both of the $(x, y)$-coordinates so this model structure will be carried forward in this section. Figure \ref{fig:pcfxy} shows the pair correlation functions from the real data and simulated data from this preferred model. It is clear that the same issues arise as for the best elevation and gradient model considered in the previous section. These issues are the appearance of unmodelled clustering in the real data which means it is reasonable to look at fitting a clustering (Cox) model. 
+
+\begin{figure}[h!]
+  \centering
+  \subfloat{\includegraphics[width=0.49\textwidth]{pcf_realxy.pdf}}
+  \hfill
+  \subfloat{\includegraphics[width=0.49\textwidth]{pcf_simxy.pdf}}
+  \caption{These are pair correlation functions for the $bei$ data. The plot on the left is based on the original data while the right uses data simulated from the model including the interaction term.}
+  \label{fig:pcfxy}
+\end{figure}
+
+Table \ref{tab:parxytom} gives the coefficients for all the $x$ and $y$ parameters alongside the intercept and the fitted cluster parameters. This model was fitted using the method "\emph{palm}" in the \emph{kppm} function. The parameter coefficients for all the polynomial coordinate terms are exactly the same as those estimated in the standard Poisson process model discussed in Section \ref{section:coordsmod}. The same applies to the intercept term. This implies that the underlying intensity estimated is the same as in the previous section. The difference in the models is the cluster process being fitted. The \emph{kappa} value gives the mean of the underlying parent Poisson process while the \emph{scale} parameter gives the standard deviation of the normal densities placed at the parent points. 
+
+The intensity for this model, which is plotted in Figure \ref{fig:tommod}, is the exact same as that which was estimated in Section \ref{section:coordsmod}. This is due to the fact that all the coefficients of the polynomial terms remained the same which forces the underlying intensity to remain the same. The plot on the left of the figure depicts the original data placed on top of the intensity which shows that this intensity appears to be quite a good fit for the data. The pair correlation functions are contained in Figure \ref{fig:pcftom}. Notice the different scales on the vertical axes. From the plots it again appears that the data are more clustered than the simulated data meaning the cluster model is not representing the data very well. This is because the plot on the right is in and around the value of $1$ whihc is what is expected from completely spatially random point processes for most values of $r$ (the radius of the circle). This is particularly clear from $20$m onwards.
+
+\begin{table}[ht]
+\centering
+    \begin{tabular}{|l|l||l|l|}
+    \hline
+       Parameter & Coefficient & Parameter & Coefficient \\
+      \hline \hline
+      Intercept & $-5.013$ & - & -\\
+      \hline
+      $x$ & $-35.100$ & $y$ & $12.700$\\
+      \hline
+      $x^2$ & $12.549$ & $y^2$ & $39.015$\\
+      \hline
+      $x^3$ & $-25.274$ & $y^3$ & $-10.112$\\
+      \hline
+      $x^4$ & $-30.247$ & $y^4$ & $-12.134$\\
+      \hline
+      $x^5$ & $-18.423$ & $y^5$ & $1.177$\\
+      \hline
+      $x^6$ & $-1.531$ & $y^6$ & $-9.294$\\
+      \hline
+      kappa & $0.007$ & scale & $8.659$\\
+      \hline
+    \end{tabular}
+    \caption{Parameter coefficients for the Thomas cluster model using the polynomials of degree $6$ for both of the $(x, y)$-coordinates.}
+    \label{tab:parxytom}
+\end{table}
+
+\begin{figure}[h!]
+  \centering
+  \subfloat{\includegraphics[width=0.49\textwidth]{best_tom_dat.pdf}}
+  \hfill
+  \subfloat{\includegraphics[width=0.49\textwidth]{best_tom.pdf}}
+  \caption{These are plots of the intensity function fitted to the \emph{bei} data using polynomials of degree $6$ in both the $x$ and $y$ directions. These were fitted as a Thomas cluster model. The left plot shows the original data overlayed onto the intensity while the right just shows the intensity surface.}
+  \label{fig:tommod}
+\end{figure}
+
+\begin{figure}[h!]
+  \centering
+  \subfloat{\includegraphics[width=0.49\textwidth]{pcf_realtom.pdf}}
+  \hfill
+  \subfloat{\includegraphics[width=0.49\textwidth]{pcf_simtom.pdf}}
+  \caption{These are pair correlation functions for the $bei$ data. The plot on the left is based on the original data while the right uses data simulated from the Thomas cluster model using the degree $6$ polynomials in the coordinate directions.}
+  \label{fig:pcftom}
+\end{figure}
+
+\vspace{5cm}
+
+\subsection{Simulations from the Cox Model}
+
+Figure \ref{fig:tomsim} below contains two different simulations from the Thomas model fitted above. These were made using a random seed of $500$. 
+
+In these simulations it is clearly a lot more dense generally than the original data appears to be. This is quite obvious in the central section of the simulations where there is a reasonably large number of points compared to Figure \ref{fig:realdat2} where the central area is nearly empty. It does, however, seem to have picked out the areas of high density relatively well. Areas such as the top and bottom corners on the left hand side or the vertical belt towards the right are correctly more dense than the other areas. 
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.8\textwidth]{tomsim.pdf}
+  \caption{These are two simulations from the Thomas model fitted to the $bei$ data in the previous section. These were created using a random seed of $500$.}
+  \label{fig:tomsim}
+\end{figure}
+
+\vspace{10cm}
+
+\subsection{Selecting the Best Model}
+
+Figure \ref{fig:poly6sim} provides two different simulations from the best Poisson process model considered in Section \ref{section:poismod}. This is to try and allow some level of comparison between the models. 
+
+These simulations from the Poisson process model appear to be quite similar to those generated from the Thomas model. This is probably because they are using identical driving intensities "under the hood". It is difficult to make any conclusions on which model is better for the data based on these simulated plots. 
+
+Overall, I would have to select the cluster model since the inhomogeneous summary characteristic functions implied quite heavily that there is some level of clustering in the underlying process generating the data. Therefore, it makes sense to choose a model which makes some attempt to model this clustering that is evident in the data set. 
+
+The next steps I would take in trying to model this data is trying to use some combinations of the $(x, y)$-coordinates and the elevation and gradient in a model together. I would also take a look at a number of different types of cluster models and check if any other perform better than the Thomas which was fitted in this section.
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.8\textwidth]{poly6sim.pdf}
+  \caption{These are two simulations from the Poisson process model fitted to the $bei$ data in Section \ref{section:poismod}. These were created using a random seed of $600$.}
+  \label{fig:poly6sim}
+\end{figure}
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=0.6\textwidth]{beidat.pdf}
+  \caption{Plot of the original $bei$ data set.}
+  \label{fig:realdat2}
+\end{figure}
 
 \appendix
 
 \chapter{R Code}
 \label{section:code}
 
-\section{Algorithm Example}
+\section{Simulation Algorithm Example}
 \label{section:egcode}
 
 \begin{lstlisting}[language = R]
 
 # Code used for the example in Section 1.1.2 and 1.1.3
+# Commentary on this code is provided in those sections and 
+# on the actual functions used to carry out the simulation
 
 library(spatstat)
 
@@ -352,6 +536,7 @@ for (i in 1:nvals) {
     new_y <- c(new_y, yvals[i])
     
   }
+  
 }
 
 thinned <- ppp(new_x, new_y, window = owin(c(0, 1), c(0, 1)))
@@ -361,14 +546,17 @@ points(thinned, pch = 16, col = "red")
 
 \end{lstlisting}
 
+%\vspace{5cm}
+
 \section{Simulation Functions}
+\label{section:simulcode}
 
 \begin{lstlisting}[language = R]
 
 # Description ------
 
-# Script containing the functions to carry out the simulations for the first
-# part of the project
+# Script containing the functions to carry out the simulations for the 
+# first part of the project
 
 # Load Packages ------
 
@@ -381,29 +569,32 @@ library(spatstat)
 
 # Inputs:
 #   intense - intensity given by the density function from spatstat
-#   full_sim - ppp object which is a simulation from a homogeneous Poisson 
-#              with intensity equal to the maximum intensity seen across the
-#              window
-#   xylim - limit of the window in both the x and y directions (positive number)
+#   xylim - limit of the window in both the x and y directions 
+#           (positive number)
 
 # Outputs:
 #   ppp object containing the thinned simulation from a Thomas process
 
-thin_sim <- function(intense, full_sim, xylim) {
+thin_sim <- function(intense, xylim) {
+  
+  # Create sample of a homogeneous Poisson process with density equal 
+  # to the highest seen in the derived driving intensity above
+  full_sim <- rpoispp(max(intense), win = owin(c(0, xylim), c(0, xylim)))
   
   # Create variables to store a vector containing the points being kept
   new_x <- NULL
   new_y <- NULL
   
-  # Extract the x and y values into vectors and find the length of the vectors
+  # Extract the x and y values into vectors and find the length of the 
+  # vectors
   xvals <- full_sim$x
   yvals <- full_sim$y
   
   nvals <- length(xvals)
   
-  # Convert the derived intensity function to the range [0, 1] and then convert 
-  # it to a function type so that the value of the density at (x, y) is 
-  # extracted easily
+  # Convert the derived intensity function to the range [0, 1] and 
+  # then convert  it to a function type so that the value of the
+  # density at (x, y) is extracted easily
   prob_dens <- as.function(intense / max(intense))
   
   for (i in 1:nvals) {
@@ -413,7 +604,8 @@ thin_sim <- function(intense, full_sim, xylim) {
     prob <- prob_dens(xvals[i], yvals[i])
     ind <- rbinom(1, 1, prob)
     
-    # If the indicator is 1 then keep the given point and add it to the vector
+    # If the indicator is 1 then keep the given point and add it 
+    # to the vector
     if (ind == 1) {
       
       new_x <- c(new_x, xvals[i])
@@ -440,15 +632,13 @@ thin_sim <- function(intense, full_sim, xylim) {
 #   mu_p - mean of parent distribution (positive number)
 #   sd_c - standard deviation of symmetric normal distribution of children
 #          around parents (positive number)
-#   xylim - limit of the window in both the x and y directions (positive number,
-#           has a default value of 1)
 #   rand_seed - number to set the random seed to to allow reproducibility of
 #               simulations (number, has an arbitrary default of 150)
 
 # Outputs:
 #   ppp object containing the simulation from a Thomas process
 
-ThomasSimul <- function(mu_p, sd_c, xylim = 1, rand_seed = 150) {
+ThomasSimul <- function(mu_p, sd_c, rand_seed = 150) {
   
   # Error traps to ensure that user inputs are valid
   if (!is.numeric(mu_p)) stop("invalid arguments. mu_p must be a numeric")
@@ -463,8 +653,12 @@ ThomasSimul <- function(mu_p, sd_c, xylim = 1, rand_seed = 150) {
   # Set random seed to allow reproducibility of simulations 
   set.seed(rand_seed)
   
-  # Randomly select number of parents from Poisson distribution of mean mu_p
+  # Randomly select number of parents from Poisson distribution of 
+  # mean mu_p
   num_p <- rpois(1, mu_p)
+  
+  # Set size of window
+  xylim <- 1
   
   # Randomly generate coordinates for each of the num_p points, with equal 
   # probability everywhere in the region of [0, xylim] in each direction
@@ -475,24 +669,215 @@ ThomasSimul <- function(mu_p, sd_c, xylim = 1, rand_seed = 150) {
   # Convert to a spatstat ppp object
   loc_p <- ppp(x_p, y_p, window = owin(c(0, xylim), c(0, xylim)))
   
-  # Calculate the driving intensity using Gaussian densities placed at each
-  # parent location with standard deviation given by sd_c
+  # Calculate the driving intensity using Gaussian densities placed at
+  # each parent location with standard deviation given by sd_c
   drive_intense <- density(loc_p, sigma = sd_c, kernel = "gaussian")
   
-  # Create sample of a homogeneous Poisson process with density equal to the
-  # highest seen in the derived driving intensity above
-  large_sim <- rpoispp(max(drive_intense), win = owin(c(0, xylim), c(0, xylim)))
-  
   # Thin this using the thinning function described above
-  thinned_sim <- thin_sim(drive_intense, large_sim, xylim)
+  thinned_sim <- thin_sim(drive_intense, xylim)
   
   return(list(thin_sim = thinned_sim, intense = drive_intense))
   
 }
 
+\end{lstlisting}
+
+\vspace{10cm}
+
+\section{Run Simulations}
+\label{section:runsimul}
+
+\begin{lstlisting}[language = R]
+    
+# Description ------
+
+# Script to run the simulations for the first part of the project, 
+# create the plots and fit the models as required
+
+# Source the Functions ------
+
+# Note that this also loads the spatstat library
+source("src/sim_funcs.R")
+
+# Create 2 Simulations, Clip to Window and Fit Models ------
+
+sim1 <- ThomasSimul(30, 0.1, rand_seed = 200)
+sim2 <- ThomasSimul(45, 0.05, rand_seed = 465)
+
+# Save plots of these simulations and the driving intensity
+pdf(file = "results/simplots/plot_sim1.pdf")
+plot(sim1$thin_sim, main = "Plot of the First Simulation from a 
+     Thomas Cluster Process")
+
+plot(sim1$intense, main = "Plot of the Driving Intensity for the 
+     First Simulation from a Thomas Cluster Process")
+
+plot(sim2$thin_sim, main = "Plot of the Second Simulation from a 
+     Thomas Cluster Process")
+     
+plot(sim2$intense, main = "Plot of the Driving Intensity for the 
+     Second Simulation from a Thomas Cluster Process")
+
+## Clip to window ##
+
+thom_sim1 <- thomas.estK(sim1$thin_sim, 
+                         startpar = c(kappa = 30, scale = 0.1))
+mat_sim1 <- matclust.estK(sim1$thin_sim, 
+                         startpar = c(kappa = 30, scale = 0.1))
+
+thom_sim2 <- kppm(sim2$thin_sim, 
+                  clusters = "Thomas", method = "mincon")
+mat_sim2 <- kppm(sim2$thin_sim, 
+                 clusters = "MatClust", method = "mincon")
 
 \end{lstlisting}
 
+\vspace{15cm}
+
+\section{Model Fitting Code}
+\label{section:modelling}
+
+\begin{lstlisting}[language = R]
+
+# Description ------
+
+# Script to run the modelling for the bei data in the 
+# second part of the project
+
+# Load packages and bei Data------
+
+library(spatstat)
+
+dat <- bei
+dat_extra <- bei.extra
+
+plot(bei, main = "bei data")
+
+# set the seed so simulations are reproducible
+set.seed(150)
+
+# Fit Kernel Smooth ------
+
+# Fit kernel smooth as initial estimate of intensity
+initial_est <- density(dat)
+
+# Save plot of this intensity
+
+plot(initial_est, 
+     main = "Initial intensity Estimate Using Function Defaults")
+
+
+# Default kernel is Gaussian so this is use since it hasn't been 
+# overridden
+
+# the bandwidth sigma is found by a "simple rule of thumb" 
+# relating only to the size of the window (assuming some 
+# 0.1 * shortest side length)
+
+# Fit densities with a large and small bandwidth to give markedly
+# different estimates of the intensity
+large_band <- density(dat, sigma = 200)
+small_band <- density(dat, sigma = 20)
+
+plot(large_band)
+
+plot(small_band)
+
+
+# Fit Models Using ppm for x and y ------
+
+mod_stat <- ppm(dat ~ 1)
+
+mod_x_y <- ppm(dat ~ x + y)
+
+mod_xy <- ppm(dat ~ x * y)
+
+mod_poly2_xy <- ppm(dat ~ poly(x, 2) + poly(y, 2))
+
+mod_poly3_xy <- ppm(dat ~ poly(x, 3) + poly(y, 3))
+
+mod_poly6_xy <- ppm(dat ~ poly(x, 6) + poly(y, 6))
+
+par(mfrow = c(2, 2), mar = c(0.5, 0.5, 0.5, 0.5))
+plot(predict(mod_poly2_xy))
+plot(predict(mod_poly3_xy))
+plot(predict(mod_poly6_xy))
+plot(density(dat, sigma = 50))
+
+plot(predict(mod_poly6_xy), 
+     main = "Model Fitted with Polynomial of Degree 6")
+
+
+datPCF_x <- pcfinhom(dat, mod_poly6_xy, 
+                     correction = "translate")
+datPCF_sim_x <- pcfinhom(simulate(mod_poly6_xy, nsim = 1)[[1]],
+                         mod_poly6_xy, correction = "translate")
+
+plot(datPCF_x, main = "Real Data")
+
+plot(datPCF_sim_x, main = "Simulated Data")
+
+
+# Fit Models Using ppm for Elevation and Gradient ------
+
+mod_elev <- ppm(dat ~ elev, data = dat_extra)
+
+mod_grad <- ppm(dat ~ grad, data = dat_extra)
+
+mod_g_e <- ppm(dat ~ elev + grad, data = dat_extra)
+
+mod_ge <- ppm(dat ~ elev * grad, data = dat_extra)
+
+plot(predict(mod_ge), main = "Model Fitted with the Interaction Term")
+
+
+datPCF <- pcfinhom(dat, mod_ge, correction = "translate")
+datPCF_sim <- pcfinhom(simulate(mod_ge, nsim = 1)[[1]], 
+                       mod_ge, correction = "translate")
+
+plot(datPCF, main = "Real Data")
+
+plot(datPCF_sim, main = "Simulated Data")
+
+
+# Fit Thomas Models ------
+
+mod_tom <- kppm(dat ~ poly(x, 6) + poly(y, 6), 
+                clusters = "Thomas", method = "palm")
+
+plot(predict(mod_tom), main = "Thomas Cluster Model Fitted 
+     with Polynomial of Degree 6")
+
+plot(mod_tom, 
+     main = "Thomas Cluster Model Fitted with Polynomial of Degree 6 with Data")
+
+datPCF_tom <- pcfinhom(dat, mod_tom, correction = "translate")
+datPCF_sim_tom <- pcfinhom(simulate(mod_tom, nsim = 1)[[1]], 
+                           mod_tom, correction = "translate")
+
+plot(datPCF_tom, main = "Real Data")
+
+plot(datPCF_sim_tom, main = "Simulated Data")
+
+# Simulations from the Cox Model ------
+
+# Set a new seed for these simulations
+set.seed(500)
+
+# Simulate from the Thomas model fitted above
+tomsim <- simulate(mod_tom, nsim = 2)
+
+plot(tomsim, main = "Data Simulated from the Thomas Model")
+
+# Simulations from the Poisson Model ------
+
+set.seed(600)
+
+poly6_sim <- simulate(mod_poly6_xy, nsim = 2)
+
+plot(poly6_sim, main = "Data Simulated from the Poisson Process Model")
+
+\end{lstlisting}
 
 \end{document}
 
