@@ -1,7 +1,8 @@
 
 # Description ------
 
-# Script to run the modelling for the bei data in the second part of the project
+# Script to run the modelling for the bei data in the 
+# second part of the project
 
 # Load packages and bei Data------
 
@@ -24,16 +25,19 @@ initial_est <- density(dat)
 
 # Save plot of this intensity
 pdf(file = "results/initialintenseplots/initial_density.pdf")
-plot(initial_est, main = "Initial intensity Estimate Using Function Defaults")
+plot(initial_est, 
+     main = "Initial intensity Estimate Using Function Defaults")
 dev.off()
 
-# Default kernel is Gaussian so this is use since it hasn't been overridden
+# Default kernel is Gaussian so this is use since it 
+# hasn't been overridden
 
-# the bandwidth sigma is found by a "simple rule of thumb" relating only to
-# the size of the window (assuming some 0.1 * shortest side length)
+# the bandwidth sigma is found by a "simple rule of thumb" 
+# relating only to the size of the window (assuming some 
+# 0.1 * shortest side length)
 
-# Fit densities with a large and small bandwidth to give markedly different
-# estimates of the intensity
+# Fit densities with a large and small bandwidth to give 
+# markedly different estimates of the intensity
 large_band <- density(dat, sigma = 200)
 small_band <- density(dat, sigma = 20)
 
@@ -66,11 +70,16 @@ plot(predict(mod_poly6_xy))
 plot(density(dat, sigma = 50))
 
 pdf(file = "results/ppmmodels/best_xy.pdf")
-plot(predict(mod_poly6_xy), main = "Model Fitted with Polynomial of Degree 6")
+plot(predict(mod_poly6_xy), 
+     main = "Model Fitted with Polynomial of Degree 6")
 dev.off()
 
-datPCF_x <- pcfinhom(dat, mod_poly6_xy, correction = "translate")
-datPCF_sim_x <- pcfinhom(simulate(mod_poly6_xy, nsim = 1)[[1]], mod_poly6_xy, correction = "translate")
+datPCF_x <- pcfinhom(dat, 
+                     mod_poly6_xy, 
+                     correction = "translate")
+datPCF_sim_x <- pcfinhom(simulate(mod_poly6_xy, nsim = 1)[[1]],
+                         mod_poly6_xy, 
+                         correction = "translate")
 
 pdf(file = "results/ppmmodels/pcf_realxy.pdf")
 plot(datPCF_x, main = "Real Data")
@@ -91,11 +100,16 @@ mod_g_e <- ppm(dat ~ elev + grad, data = dat_extra)
 mod_ge <- ppm(dat ~ elev * grad, data = dat_extra)
 
 pdf(file = "results/ppmmodels/best_ge.pdf")
-plot(predict(mod_ge), main = "Model Fitted with the Interaction Term")
+plot(predict(mod_ge), 
+     main = "Model Fitted with the Interaction Term")
 dev.off()
 
-datPCF <- pcfinhom(dat, mod_ge, correction = "translate")
-datPCF_sim <- pcfinhom(simulate(mod_ge, nsim = 1)[[1]], mod_ge, correction = "translate")
+datPCF <- pcfinhom(dat, 
+                   mod_ge, 
+                   correction = "translate")
+datPCF_sim <- pcfinhom(simulate(mod_ge, nsim = 1)[[1]], 
+                       mod_ge, 
+                       correction = "translate")
 
 pdf(file = "results/ppmmodels/pcf_real.pdf")
 plot(datPCF, main = "Real Data")
@@ -107,18 +121,26 @@ dev.off()
 
 # Fit Thomas Models ------
 
-mod_tom <- kppm(dat ~ poly(x, 6) + poly(y, 6), clusters = "Thomas", method = "palm")
+mod_tom <- kppm(dat ~ poly(x, 6) + poly(y, 6), 
+                clusters = "Thomas", 
+                method = "palm")
 
 pdf(file = "results/ppmmodels/best_tom.pdf")
-plot(predict(mod_tom), main = "Thomas Cluster Model Fitted with Polynomial of Degree 6")
+plot(predict(mod_tom), 
+     main = "Thomas Cluster Model Fitted with Polynomial of Degree 6")
 dev.off()
 
 pdf(file = "results/ppmmodels/best_tom_dat.pdf")
-plot(mod_tom, main = "Thomas Cluster Model Fitted with Polynomial of Degree 6 with Data")
+plot(mod_tom, 
+     main = "Thomas Cluster Model Fitted with Polynomial of Degree 6 with Data")
 dev.off()
 
-datPCF_tom <- pcfinhom(dat, mod_tom, correction = "translate")
-datPCF_sim_tom <- pcfinhom(simulate(mod_tom, nsim = 1)[[1]], mod_tom, correction = "translate")
+datPCF_tom <- pcfinhom(dat, 
+                       mod_tom, 
+                       correction = "translate")
+datPCF_sim_tom <- pcfinhom(simulate(mod_tom, nsim = 1)[[1]], 
+                           mod_tom, 
+                           correction = "translate")
 
 pdf(file = "results/ppmmodels/pcf_realtom.pdf")
 plot(datPCF_tom, main = "Real Data")
@@ -137,7 +159,8 @@ set.seed(500)
 tomsim <- simulate(mod_tom, nsim = 2)
 
 pdf(file = "results/ppmmodels/tomsim.pdf")
-plot(tomsim, main = "Data Simulated from the Thomas Model")
+plot(tomsim, 
+     main = "Data Simulated from the Thomas Model")
 dev.off()
 
 # Simulations from the Poisson Model ------
@@ -147,19 +170,6 @@ set.seed(600)
 poly6_sim <- simulate(mod_poly6_xy, nsim = 2)
 
 pdf(file = "results/ppmmodels/poly6sim.pdf")
-plot(poly6_sim, main = "Data Simulated from the Poisson Process Model")
+plot(poly6_sim, 
+     main = "Data Simulated from the Poisson Process Model")
 dev.off()
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -10,6 +10,7 @@
 \usepackage[labelfont=bf]{caption}
 \usepackage{natbib} % n.b. fixed since panopto video 
 \usepackage{listings}
+\usepackage{multirow}
 \usepackage[
 breaklinks=true,colorlinks=true,
 %linkcolor=blue,urlcolor=blue,citecolor=blue,% PDF VIEW
@@ -90,13 +91,13 @@ Project 1 - Simulation and Model Fitting
 
 \section{Description of the Simulation Process}
 
-This section provides a description of the process followed to create the simulation algorithm for a Thomas cluster process by deriving a random driving intensity and then using thinning to create a given realisation. For reference, the code for the simulation algorithm is contained in Section \ref{section:simulcode} of the Appendix.
+This section provides a description of the process followed to create the simulation algorithm for a Thomas cluster process by deriving a random driving intensity and then using thinning to create a given realisation. For reference, the commented code for the simulation algorithm is contained in Section \ref{section:simulcode} of the Appendix.
 
 \subsection{Usability and Reproducibility}
 
-The simulation algorithm is written using functions within \emph{R} since this allows the simulations to be re-run multiple times easily and without having to repeat code. Making use of functions allowed inputs to be created that let the user control some elements of the simulations. These inputs included the mean of the distribution of the number of parents, the bandwidth used in creating the driving intensity and a random seed.   
+The simulation algorithm is written using functions within \emph{R} since this allows the simulations to be re-run multiple times without having to repeat the code. Making use of functions allowed inputs to be created that let the user control some elements of the simulations. These inputs included the mean of the distribution of the number of parents, the bandwidth used in creating the driving intensity and a random seed.   
 
-Initially, there is a set of input checks which are just there to improve usability of the function. It ensures the user inputs are valid to reduce the chance of unexplained errors later in the process. The data type and limitations for each input is described above the function. The next step was to set the random seed. This allows the results of the simulation (ie. the realizations) to be reproduced if the same inputs are given to the function. If this was not included then the realizations would be different every time the function is run, even if all the other inputs remained the same. 
+Initially, there is a set of input checks which are just there to improve usability of the function. It ensures the user inputs are valid to reduce the chance of unexplained errors later in the process. The data type and limitations for each input is described above the function. The next step was to set the random seed. This allows the results of the simulation (i.e. the realizations) to be reproduced if the same inputs are given to the function. If this was not included then the realizations would be different every time the function is run, even if all the other inputs remained the same. 
 
 \subsection{Parent Points}
 \label{section:parents}
@@ -107,7 +108,7 @@ The next step is to place the required number of parent points randomly and inde
 
 A driving intensity was then derived using the randomly located parent points as the centres of Gaussian densities which were symmetric in every direction. These densities have a single parameter $\sigma$ which is the standard deviation of the normal distribution being placed at each parent point. This can be controlled by the user and changed to fit the situation being simulated. This driving intensity was created using the \emph{density} function from \emph{spatstat} using Gaussian kernels and the \emph{sigma} parameter as described above. 
  
-Now we will consider a short example of this part of the algorithm. The \emph{R} code used for this example is contained in Section \ref{section:egcode} of the Appendix. First, set the seed to $123$ and simulate a value from a Poisson distribution with mean $11$. This returns a value of $9$ parent points. The next step is to generate the $(x, y)$-coordinates for each of these $9$ points using random draws from a uniform distribution in the range $[0, 1]$. This returns vectors for the $x$-coordinate and the $y$-coordinate, the values of which are contained in Table \ref{tab:egxy}. These points can be plotted as seen on the left in Figure \ref{fig:eg1}. The final step in this section of the algorithm is to devise the driving intensity from these parent points by placing symmetric Gaussian densities at these parent points with a standard deviation of $0.1$. This intensity can be seen on the right side of Figure \ref{fig:eg1}.
+Now we will consider a short example of this part of the algorithm. The \emph{R} code used for this example is contained in Section \ref{section:egcode} of the Appendix. First, set the seed to $123$ and simulate a value from a Poisson distribution with mean $11$. This returns a value of $9$ parent points. The next step is to generate the $(x, y)$-coordinates for each of these $9$ points using random draws from a uniform distribution in the range $[0, 1]$. This returns vectors for the $x$-coordinate and the $y$-coordinate, the values of which are contained in Table \ref{tab:egxy}. These points can be plotted as seen on the left in Figure \ref{fig:eg1}. The final step in this section of the algorithm is to derive the driving intensity from these parent points by placing symmetric Gaussian densities at these parent points with a standard deviation of $0.1$. This intensity can be seen on the right side of Figure \ref{fig:eg1}.
  
 \begin{table}[h!]
 \centering
@@ -118,7 +119,7 @@ Now we will consider a short example of this part of the algorithm. The \emph{R}
       y & $0.453$ & $0.678$ & $0.573$ & $0.103$ & $0.900$ & $0.246$ & $0.042$ & $0.328$ & $0.955$\\
       \hline
     \end{tabular}
-    \caption{$x$- and $y$-coordinate values used in the example in Section \ref{section:parents}.}
+    \caption{$(x, y)$-coordinate values used in the example in Section \ref{section:parents}. These are rounded to 3 decimal places.}
     \label{tab:egxy}
 \end{table}
  
@@ -134,11 +135,11 @@ Now we will consider a short example of this part of the algorithm. The \emph{R}
 \subsection{Thinning}
 \label{section:thinning}
 
-The thinning section of the algorithm took part in a separate function to avoid the main simulation function becoming too crowded. This function took as inputs the driving intensity based on the parent points derived in the previous step and the length of the sides of the square being simulated in.
+The thinning section of the algorithm took part in a separate function to avoid the main simulation function becoming too crowded. As its inputs this function took the driving intensity based on the parent points derived in the previous step and the length of the sides of the square being simulated in.
 
-This thinning process is completed by first generating a sample from a homogeneous Poisson process using the \emph{rpoispp()} function from the \emph{spatstat} library this time. The intensity for this homogeneous Poisson process is given by the maximum intensity value observed in the derived driving intensity that came from the parent points and is generated in the same window as specified earlier. 
+This thinning process is completed by first generating a sample from a homogeneous Poisson process using the \emph{rpoispp} function from the \emph{spatstat} package this time. The intensity for this homogeneous Poisson process is given by the maximum intensity value observed in the derived driving intensity that came from the parent points and is generated in the same window as specified earlier. 
 
-The thinning step is then applied to this realisation of the homogeneous Poisson process. Two empty vectors are created to store the $(x, y)$-coordinates that are to kept as points in the final simulation. The $(x, y)$-coordinates are extracted from the $ppp$ object created during the simulation from the homogeneous Poisson. All the values in the previously derived driving intensity are transformed to probabilities by dividing each by the maximum value of the intensity observed so they are all now in the range $[0, 1]$. Now, for each set of $(x, y)$-coordinates, a Bernoulli random variable is simulated. This has the following PDF:
+The thinning step is then applied to this realisation of the homogeneous Poisson process. Two empty vectors are created to store the $(x, y)$-coordinates that are to be kept as points in the final simulation. The $(x, y)$-coordinates are extracted from the $ppp$ object created during the simulation from the homogeneous Poisson. All the values in the previously derived driving intensity are transformed to probabilities by dividing each by the maximum value of the intensity observed so they are all now in the range $[0, 1]$. Now, for each set of $(x, y)$-coordinates, a Bernoulli random variable is simulated. This has the following PDF:
 
 \begin{equation*}
     f(x) = 
@@ -149,9 +150,9 @@ The thinning step is then applied to this realisation of the homogeneous Poisson
 \end{equation*}
 The probability $p$ of returning a value of $1$ is given by the value of the transformed density evaluated at the point under consideration. The point was kept and added to the initially empty storage vectors if a value of $1$ is returned by the Bernoulli trial and is removed (not added to the storage vectors) from the simulation if $0$ is returned. 
 
-The $(x, y)$-coordinates that are kept after the thinning process described above are then converted to a \emph{ppp} object then returned. The overall simulation function then returns a list containing these simulation points as a \emph{ppp} object and the driving intensity derived in Section \ref{section:parents}.
+The $(x, y)$-coordinates that are kept after the thinning process described above are then converted to a \emph{ppp} object and then returned. The overall simulation function then returns a list containing these simulation points as a \emph{ppp} object and the driving intensity derived in Section \ref{section:parents}.
 
-Continuing the example from the previous section, the full simulation from a homogeneous Poisson process is created. This is shown on the left of Figure \ref{fig:eg2}. The thinning process is then applied making use of the driving intensity depicted on the right of Figure \ref{fig:eg1}. The plot on the right of Figure \ref{fig:eg2} shows all the points again but those points in red are the points that are kept as part of the simulation. All the other points are removed from the simulation. 
+Continuing the example from the previous section, the full simulation from a homogeneous Poisson process is created. This is shown on the left of Figure \ref{fig:eg2}. The thinning process is then applied making use of the driving intensity depicted on the right of Figure \ref{fig:eg1}. The plot on the right of Figure \ref{fig:eg2} shows all the points again but those in red are those that are kept as part of the simulation. All the other points are removed from the simulation. 
 
 \begin{figure}[h!]
   \centering
@@ -163,8 +164,9 @@ Continuing the example from the previous section, the full simulation from a hom
 \end{figure}
 
 \section{Realisations from the Simulation}
+\label{section:realisations}
 
-This section contains two realisations from the simulation algorithm described in the previous section. Figure \ref{fig:sim1} shows the plots from the first simulation where the mean number of parent points was $30$, the standard deviation of the Gaussian densities placed at the parent points was $0.1$, a random seed of $200$ and the simulation was completed in the unit square. The plots for the second simulation are contained in Figure \ref{fig:sim2}. This simulation was completed using a mean number of parents of $45$, standard deviation of the Gaussian densities equal to $0.05$ and a random seed of $465$. This was again simulated within the unit square. The code to carry out these runs of the simulation is contained in Section \ref{section:runsimul} of the Appendix.
+This section contains two realisations from the simulation algorithm described in the previous section. Figure \ref{fig:sim1} shows the plots from the first simulation where the mean number of parent points was $30$, the standard deviation of the Gaussian densities placed at the parent points was $0.1$, a random seed of $200$ and the simulation was completed in the unit square. The plots for the second simulation are contained in Figure \ref{fig:sim2}. This simulation was completed using a mean number of parents of $45$, standard deviation of the Gaussian densities equal to $0.05$ and a random seed of $465$. This was again simulated within the unit square. The code to create these realisations of the simulation algorithm is contained in Section \ref{section:runsimul} of the Appendix.
 
 \begin{figure}[h!]
   \centering
@@ -186,7 +188,7 @@ This section contains two realisations from the simulation algorithm described i
   \label{fig:sim2}
 \end{figure}
 
-\section{Fitting Thomas and Matern Process Models}
+\section{Fitting Thomas and Mat\'ern Process Models}
 
 \subsection{Minimum Contrast Method}
 
@@ -194,23 +196,65 @@ This is a common method used for estimating parameters for Poisson cluster proce
 \begin{equation*}
     \Delta(\boldsymbol{\theta}) = \int_{s_1}^{s_2}|\hat{S}(r)-S_{\boldsymbol{\theta}}(r)|^\beta dr
 \end{equation*}
-with respect to $\boldsymbol{\theta}$ where this is a vector of the parameters. The vector of parameters that minimise this expression are the estimators of the parameters. $S(r)$ is a summary characteristic depending on the distance from a point $r$. The other values included in the expression are generally arbitrary. However, it is normal practice to select $\beta$ = 2. The limits of the integration expression remain arbitrary with no standard selection for these. 
+with respect to $\boldsymbol{\theta}$ where this is a vector of the parameters. The vector of parameters that minimise this expression are the estimators of the parameters. $S(r)$ is a summary characteristic depending on the distance from a point $r$. Generally, the other values included in the expression are arbitrary. However, it is normal practice to select $\beta$ = 2. The limits of the integration expression remain arbitrary with no standard selection for these. 
 
 In reality, the formula given above for the minimum contrast method is discretised (broken up into discrete points) to make a summation formula. This means the method now tries to minimise using
 \begin{equation*}
     \int_{s_1}^{s_2}|\hat{S}(r)-S_{\boldsymbol{\theta}}(r)|^\beta dr \approx \sum_{i = 0}^k |\hat{S}(\gamma_i)-S_{\boldsymbol{\theta}}(\gamma_i)|^\beta
 \end{equation*}
-where $S(r)$ and  $\beta$ remained defined as above. Meanwhile, $\gamma_0 = s_1$, $\gamma_k = s_2$ and $\gamma_i = \gamma_0 + i\delta$ where $\delta = \frac{s_2-s_1}{k}$ and $k$ is a positive integer. This is just breaking the range of values for $r$ into $k + 1$ discrete points to evaluate the summary characteristic function $S(r)$ at to give the total difference. Taking the limit as $k$ tends to $\infty$ of the sum will lead back to the initial integration definition for the method. 
+where $S(r)$ and  $\beta$ remained defined as above. Meanwhile, $\gamma_0 = s_1$, $\gamma_k = s_2$ and $\gamma_i = \gamma_0 + i\delta$ where $\delta = \frac{s_2-s_1}{k}$ and $k$ is a positive integer. This is simply breaking the range of values for $r$ into $k + 1$ discrete points to evaluate the summary characteristic function $S(r)$ at to give the total difference. Taking the limit as $k$ tends to $\infty$ of the sum will lead back to the initial integration definition for the method. 
 
 The summary characteristics commonly used are either
 \begin{equation*}
     S(r)=K(r) \quad \text{or} \quad S(r) = g(r)
 \end{equation*}
-where $K(r)$ is Ripley's K-function and $g(r)$ is the pair correlation function. Throughout this section the minimum contrast method will be used with $g(r)$. This is defined in terms of $K(r)$ and contains the same information as it. $K(r)$ is defined to be the mean number of distinct points found within a distance r from any given point (not including the point itself). $g(r)$ is then a summary characteristic defined to be proportional to the derivative of $K(r)$ defined previously. This can be written out as
+where $K(r)$ is Ripley's K-function and $g(r)$ is the pair correlation function. Throughout this section the minimum contrast method will be used with $K(r)$. $K(r)$ is defined to be the mean number of distinct points found within a distance r from any given point (not including the point itself). Whereas, $g(r)$ is defined in terms of $K(r)$ and contains the same information as it. In fact, it is a summary characteristic defined to be proportional to the derivative of $K(r)$. This can be written out as
 \begin{equation*}
-    g(r) = \frac{K'(r)}{2\pi r} \quad \text{for } r\geq 0
+    g(r) = \frac{K'(r)}{2\pi r} \quad \text{for } r\geq 0.
 \end{equation*}
 
+\subsection{Clip to Nominal Window}
+
+Both realisations of the simulation algorithm from Section \ref{section:realisations} were clipped to a nominal window based on a simple rule. Each were clipped by double their \emph{sigma} value from each edge. This meant the first simulation went from being in the whole unit square to the range $[0.2, 0.8]$ on both axes while the second simulation was moved into the range $[0.1, 0.9]$ on both axes. Plots of these new versions of the realisations are given in Figure \ref{fig:clipsim}.
+
+\begin{figure}[h!]
+  \centering
+  \subfloat{\includegraphics[width=0.49\textwidth]{clip_sim1.pdf}}
+  \hfill
+  \subfloat{\includegraphics[width=0.49\textwidth]{clip_sim2.pdf}}
+  \caption{Plots of the two simulations from a Thomas process clipped to nominal windows. The left plot is the first simulation clipped to $[0.2, 0.8]$ on both axes while the right plot is the second clipped to $[0.1, 0.9]$ on both axes.}
+  \label{fig:clipsim}
+\end{figure}
+
+\subsection{Model Parameters and Pair Correlation Functions}
+
+\begin{table}[ht]
+\centering
+    \begin{tabular}{|l|l|l|l|}
+    \hline
+                                    & & Thomas & Mat\'ern \\
+                                    \hline
+        \multirow{2}{*}{Realisation 1} & kappa & $1.614$ & $0.145$\\
+                                      & scale & $0.190$ & $1.297$\\
+        \hline
+        \multirow{2}{*}{Realisation 2} & kappa & $18.619$ & $18.614$\\
+                                      & scale & $7.009\text{x}10^{-5}$ & $1.319\text{x}10^{-4}$\\
+        \hline
+    \end{tabular}
+    \caption{This contains the model parameters from the Thomas and Mat\'ern cluster models fitted to the two realisations of the simulation algorithm.}
+    \label{tab:simmodparas}
+\end{table}
+
+Table \ref{tab:simmodparas} provides the values of the parameters for the two types of cluster models fitted to the realisations of the simulation algorithm. Both models had the same uniform density of $18$ for the first realisation and $49$ for the second as would be expected. 
+
+Figure \ref{fig:manypcfs} contains all the pair correlation functions for both realisations and both types of model. A translation edge correction was used when creating these plots. The fact that the black line in the two plots of the first column remains mostly above the dashed red line indicates that this is clustered data. This is what we would hope to see given that these are realisations of a simulation algorithm for clustered data. Neither model appears to do particularly well at recreating this clustering seen in the real data. The wildly different scales on the vertical axes in the second row make any inference difficult here. However, in the first row the Thomas model appears to recreate the clustering better then the Mat\'ern model. Again this is as expected given these are simulations from a Thomas cluster process. Therefore I would conclude that the Thomas model is slightly better for modelling this simulated point process data. 
+
+\begin{figure}[h]
+  \centering
+  \includegraphics[width=\textwidth]{all_pcfs.pdf}
+  \caption{These are the pair correlation functions for the simulated data and both types of models. The first row contains all the plots relating to the first realisation and the second row contains all those relating to the second realisation.}
+  \label{fig:manypcfs}
+\end{figure}
 
 
 \chapter{Model Fitting}
@@ -233,7 +277,7 @@ The \emph{bei} data set contains information on the location of $3604$ trees and
 
 The first step when trying to model this data is to fit a kernel smooth. This is fitted using the \emph{density.ppp} function provided in \emph{spatstat}. This function is simply placing symmetric kernels at every point in the pattern and then summing all the values of these kernels at every point. The shape and spread of the kernel can be controlled by specifying different types of kernels and specifying the bandwidth (\emph{sigma}). 
 
-The initial smooth, depicted on the right of Figure \ref{fig:initplot}, is fitted using the function defaults. It is difficult to tell with this many points which kernel is being used. Since it appears to be relatively smooth, it is unlikely to be the disc kernel but it is not easy to decide between the other three options (these being Gaussian, quartic and Epanechnikov). Looking at the help files for the function, the default kernel used is in fact the Gaussian. Again, just looking at the plot it is difficult to make any kind of guess as to the value being used for the bandwidth. However, the help files says that there is a "simple rule of thumb that depends only on the size of the window" to calculate a value for \emph{sigma} when none is specified by the user. In this case, it appears to have a value of $50$ and a window size of $1000$ by $500$ (this was concluded using trial and error). This implies the formula being used is either $0.05a$ or $0.1b$ where $a$ is longer than $b$ but this is only based on this one example. 
+The initial smooth, depicted on the right of Figure \ref{fig:initplot}, is fitted using the function defaults. It is difficult to tell with this many points which kernel is being used. Since it appears to be relatively smooth, it is unlikely to be the disc kernel but it is not easy to decide between the other three options (these being Gaussian, quartic and Epanechnikov). Looking at the help files for the function, the default kernel used is in fact the Gaussian. Again, just looking at the plot it is difficult to make any kind of guess as to the value being used for the bandwidth. However, the help files says that there is a "simple rule of thumb that depends only on the size of the window" to calculate a value for \emph{sigma} when none is specified by the user. In this case, it appears to have a value of $50$ and a window size of $1000$m by $500$m (this was concluded using trial and error). This implies the formula being used is either $0.05a$ or $0.1b$ where $a$ is the length of the longest side while $b$ is the length of the shorter side but this is only based on this one example so is not necessarily conclusive. 
 
 \begin{figure}[h!]
   \centering
@@ -244,7 +288,7 @@ The initial smooth, depicted on the right of Figure \ref{fig:initplot}, is fitte
   \label{fig:lrgsml}
 \end{figure}
 
-Figure \ref{fig:lrgsml} provides two markedly different intensity estimates. These are both also markedly different from the initial estimate using the function defaults. The only change in these intensities is the use of different values for the bandwidth. It is clear to see that the higher bandwidth leads to a much flatter intensity while the smaller value leads to a much more bumpy estimate of the intensity. 
+Figure \ref{fig:lrgsml} provides two markedly different intensity estimates. Also, these both differ from the initial estimate using the function defaults. The only change in these intensities is the use of different values for the bandwidth. It is clear to see that the higher bandwidth leads to a much flatter intensity while the smaller value leads to a much more bumpy estimate of the intensity. 
 
 \section{Fitting Poisson Process Models}
 \label{section:poismod}
@@ -266,13 +310,13 @@ where $L(\hat{\theta})$ is the likelihood function evaluated at its maximum whic
 \subsection{Using Coordinates}
 \label{section:coordsmod}
 
-The first model fitted was just a constant model using the formula "$bei \sim 1$". Looking at the intensity estimated in Section \ref{section:kernels} it is quite clear that this will not be a good model which should be evident in the AIC values. This model was included for completeness. The next model fitted was one that depended on $x$ and $y$ individually using the formula "$bei \sim x+y$" which was followed by the model based on the interaction term using the formula "$bei \sim x*y$". The final three models fitted were all polynomials of degree $2$, $3$ and $6$ respectively. These polynomial models include coefficients for all the powers of the coordinates up to and include the degree given. For example, the form of the polynomial model of degree $3$ is
+The first model fitted was just a constant model using the formula "$bei \sim 1$". Looking at the intensities estimated in Section \ref{section:kernels} it is quite clear that this will not be a good model which should be evident in the AIC values. This model was included for completeness. The next model fitted was one that depended on $x$ and $y$ individually using the formula "$bei \sim x+y$" which was followed by the model based on the interaction term using the formula "$bei \sim x*y$". The final three models fitted were all polynomials of degree $2$, $3$ and $6$ respectively. These polynomial models include coefficients for all the powers of the coordinates up to and include the degree given. For example, the form of the polynomial model of degree $3$ is
 \begin{equation*}
     log(\mathbb{E}(\lambda(x, y))) = \beta_0 + \beta_1x+\beta_2x^2+\beta_3x^3+\beta_4y+\beta_5y^2+\beta_6y^3
 \end{equation*}
 where the $\beta_i$s are the coefficients to be estimated in the model. 
 
-The AIC values for all these models are contained in Table \ref{tab:AICxy}. From Section \ref{AICdefn}, it is known that selection by AIC is done by choosing the model with the lowest value for the AIC. Looking at the table it can be seen that the models improve on each other as you move down the table. Therefore, the polynomial model of degree $6$ is the best of the models considered and so it should be brought forward in the modelling process. The intensity function for this model is provided in Figure \ref{fig:xymod}. This intensity does appear to pick up the rough location of the dense locations but it does not appear as dense as the kernel smooth estimated previously. 
+The AIC values for all these models are contained in Table \ref{tab:AICxy}. From Section \ref{AICdefn}, it is known that selection by AIC is done by choosing the model with the lowest value for the AIC. Looking at the table it can be seen that the models improve on each other as you move down the rows. Therefore, the polynomial model of degree $6$ is the best of the models considered and so it should be brought forward in the modelling process. The intensity function for this model is provided in Figure \ref{fig:xymod}. This intensity does appear to pick up the rough location of the dense locations but it does not appear as dense as the kernel smooth estimated previously. 
 
 \begin{table}[ht]
 \centering
@@ -308,7 +352,7 @@ The AIC values for all these models are contained in Table \ref{tab:AICxy}. From
 
 \subsection{Using Elevation and Gradient}
 
-In this section we look at fitting models using the extra available covariates in the data set. These include the elevation which is defined to be the elevation above sea level in metres. Meanwhile, a measure of the gradient is present at each point in the region. This is defined to be the norm of the elevation gradient so is in effect the size of the change in the elevation.  
+In this section we look at fitting models using the extra available covariates in the data set. These include the elevation which is defined to be the distance above sea level in metres. Meanwhile, a measure of the gradient is present at each point in the region. This is defined as the norm of the elevation gradient so is in effect the magnitude of the change in the elevation.  
 
 A number of different models were fitted using these covariates. Throughout this section and the rest of this report, $e$ represents the elevation and $g$ represents the gradient. The modelling process began with a model that simply depended on the elevation which was fitted using the formula "$bei \sim e$". The next model was one that was based on only the gradient this time. This used the formula "$bei \sim g$". Following on, a model depending on a linear combination of these covariates was considered using the formula "$bei \sim e+g$" which led onto the model including the interaction of these covariates given by "$bei \sim e * g$".
 
@@ -390,7 +434,7 @@ The preferred model from Section \ref{section:poismod} (selected by AIC) was the
 
 Table \ref{tab:parxytom} gives the coefficients for all the $x$ and $y$ parameters alongside the intercept and the fitted cluster parameters. This model was fitted using the method "\emph{palm}" in the \emph{kppm} function. The parameter coefficients for all the polynomial coordinate terms are exactly the same as those estimated in the standard Poisson process model discussed in Section \ref{section:coordsmod}. The same applies to the intercept term. This implies that the underlying intensity estimated is the same as in the previous section. The difference in the models is the cluster process being fitted. The \emph{kappa} value gives the mean of the underlying parent Poisson process while the \emph{scale} parameter gives the standard deviation of the normal densities placed at the parent points. 
 
-The intensity for this model, which is plotted in Figure \ref{fig:tommod}, is the exact same as that which was estimated in Section \ref{section:coordsmod}. This is due to the fact that all the coefficients of the polynomial terms remained the same which forces the underlying intensity to remain the same. The plot on the left of the figure depicts the original data placed on top of the intensity which shows that this intensity appears to be quite a good fit for the data. The pair correlation functions are contained in Figure \ref{fig:pcftom}. Notice the different scales on the vertical axes. From the plots it again appears that the data are more clustered than the simulated data meaning the cluster model is not representing the data very well. This is because the plot on the right is in and around the value of $1$ whihc is what is expected from completely spatially random point processes for most values of $r$ (the radius of the circle). This is particularly clear from $20$m onwards.
+The intensity for this model, which is plotted in Figure \ref{fig:tommod}, is the exact same as that which was estimated in Section \ref{section:coordsmod}. This is due to the fact that all the coefficients of the polynomial terms remained the same which forces the underlying intensity to remain the same. The plot on the left of the figure depicts the original data placed on top of the intensity which shows that this intensity appears to be quite a good fit for the data. The pair correlation functions are contained in Figure \ref{fig:pcftom}. Notice the different scales on the vertical axes. From the plots it again appears that the data are more clustered than the simulated data meaning the cluster model is not representing the data very well. This is because the plot on the right is in and around the value of $1$ which is what is expected from completely spatially random point processes for most values of $r$ (the radius of the circle). This is particularly clear from $20$m onwards.
 
 \begin{table}[ht]
 \centering
@@ -443,7 +487,7 @@ The intensity for this model, which is plotted in Figure \ref{fig:tommod}, is th
 
 Figure \ref{fig:tomsim} below contains two different simulations from the Thomas model fitted above. These were made using a random seed of $500$. 
 
-In these simulations it is clearly a lot more dense generally than the original data appears to be. This is quite obvious in the central section of the simulations where there is a reasonably large number of points compared to Figure \ref{fig:realdat2} where the central area is nearly empty. It does, however, seem to have picked out the areas of high density relatively well. Areas such as the top and bottom corners on the left hand side or the vertical belt towards the right are correctly more dense than the other areas. 
+Generally, these simulations are a lot more dense than the original data appears to be. This is quite obvious in the central section of the simulations where there is a reasonably large number of points compared to Figure \ref{fig:realdat2} where the central area is nearly empty. It does, however, seem to have picked out the areas of high density relatively well. Areas such as the top and bottom corners on the left hand side or the vertical belt towards the right are correctly more dense than the other areas. 
 
 \begin{figure}[h]
   \centering
@@ -458,11 +502,11 @@ In these simulations it is clearly a lot more dense generally than the original 
 
 Figure \ref{fig:poly6sim} provides two different simulations from the best Poisson process model considered in Section \ref{section:poismod}. This is to try and allow some level of comparison between the models. 
 
-These simulations from the Poisson process model appear to be quite similar to those generated from the Thomas model. This is probably because they are using identical driving intensities "under the hood". It is difficult to make any conclusions on which model is better for the data based on these simulated plots. 
+These simulations from the Poisson process model appear to be quite similar to those generated from the Thomas model. This is most likely because they are using identical driving intensities to generate the data. It is difficult to make any conclusions on which model is better for the data based on these simulated plots. 
 
 Overall, I would have to select the cluster model since the inhomogeneous summary characteristic functions implied quite heavily that there is some level of clustering in the underlying process generating the data. Therefore, it makes sense to choose a model which makes some attempt to model this clustering that is evident in the data set. 
 
-The next steps I would take in trying to model this data is trying to use some combinations of the $(x, y)$-coordinates and the elevation and gradient in a model together. I would also take a look at a number of different types of cluster models and check if any other perform better than the Thomas which was fitted in this section.
+The next steps I would take in trying to model this data is by using some combinations of the $(x, y)$-coordinates and the elevation and gradient in a model together. I would also take a look at a number of different types of cluster models and check if any others perform better than the Thomas which was fitted in this section.
 
 \begin{figure}[h]
   \centering
@@ -555,8 +599,8 @@ points(thinned, pch = 16, col = "red")
 
 # Description ------
 
-# Script containing the functions to carry out the simulations for the 
-# first part of the project
+# Script containing the functions to carry out the simulations for 
+# the first part of the project
 
 # Load Packages ------
 
@@ -564,8 +608,8 @@ library(spatstat)
 
 # Thinning Function ------
 
-# Function to thin a simulation from a homogeneous Poisson process to an 
-# inhomogeneous Poisson process simulation
+# Function to thin a simulation from a homogeneous Poisson process  
+# to an inhomogeneous Poisson process simulation
 
 # Inputs:
 #   intense - intensity given by the density function from spatstat
@@ -573,34 +617,39 @@ library(spatstat)
 #           (positive number)
 
 # Outputs:
-#   ppp object containing the thinned simulation from a Thomas process
+#   ppp object containing the thinned simulation from a Thomas 
+#   process
 
 thin_sim <- function(intense, xylim) {
   
-  # Create sample of a homogeneous Poisson process with density equal 
-  # to the highest seen in the derived driving intensity above
-  full_sim <- rpoispp(max(intense), win = owin(c(0, xylim), c(0, xylim)))
+  # Create sample of a homogeneous Poisson process with density 
+  # equal to the highest seen in the derived driving intensity 
+  # above
+  full_sim <- rpoispp(max(intense), 
+                      win = owin(c(0, xylim), c(0, xylim)))
   
-  # Create variables to store a vector containing the points being kept
+  # Create variables to store a vector containing the points being 
+  # kept
   new_x <- NULL
   new_y <- NULL
   
-  # Extract the x and y values into vectors and find the length of the 
-  # vectors
+  # Extract the x and y values into vectors and find the length 
+  # of the vectors
   xvals <- full_sim$x
   yvals <- full_sim$y
   
   nvals <- length(xvals)
   
-  # Convert the derived intensity function to the range [0, 1] and 
-  # then convert  it to a function type so that the value of the
-  # density at (x, y) is extracted easily
+  # Convert the derived intensity function to the range [0, 1] 
+  # and then convert it to a function type so that the value of 
+  # the density at (x, y) is extracted easily
   prob_dens <- as.function(intense / max(intense))
   
   for (i in 1:nvals) {
     
-    # Find probability density at the given point then sample a Bernoulli 
-    # variable with probability of 1 equal to this probability
+    # Find probability density at the given point then sample a 
+    # Bernoulli variable with probability of 1 equal to this 
+    # probability
     prob <- prob_dens(xvals[i], yvals[i])
     ind <- rbinom(1, 1, prob)
     
@@ -616,7 +665,8 @@ thin_sim <- function(intense, xylim) {
   }
   
   # Convert to a spatstat ppp object and return
-  thinned <- ppp(new_x, new_y, window = owin(c(0, xylim), c(0, xylim)))
+  thinned <- ppp(new_x, new_y, 
+                 window = owin(c(0, xylim), c(0, xylim)))
   
   return(thinned)
   
@@ -625,15 +675,16 @@ thin_sim <- function(intense, xylim) {
 
 # Thomas Simulation Function ------
 
-# Function to run the simulation of a Thomas cluster process using the 
-# thinning function above
+# Function to run the simulation of a Thomas cluster process using  
+# the thinning function above
 
 # Inputs:
 #   mu_p - mean of parent distribution (positive number)
-#   sd_c - standard deviation of symmetric normal distribution of children
-#          around parents (positive number)
-#   rand_seed - number to set the random seed to to allow reproducibility of
-#               simulations (number, has an arbitrary default of 150)
+#   sd_c - standard deviation of symmetric normal distribution of 
+#          children around parents (positive number)
+#   rand_seed - number to set the random seed to to allow 
+#               reproducibility of simulations (number, has an 
+#               arbitrary default of 150)
 
 # Outputs:
 #   ppp object containing the simulation from a Thomas process
@@ -643,25 +694,24 @@ ThomasSimul <- function(mu_p, sd_c, rand_seed = 150) {
   # Error traps to ensure that user inputs are valid
   if (!is.numeric(mu_p)) stop("invalid arguments. mu_p must be a numeric")
   if (!is.numeric(sd_c)) stop("invalid arguments. sd_c must be a numeric")
-  if (!is.numeric(xylim)) stop("invalid arguments. xylim must be a numeric")
   if (!is.numeric(rand_seed)) stop("invalid arguments. rand_seed must be a numeric")
   
   if (mu_p <= 0) stop("invalid arguments. mu_p must be > 0")
   if (sd_c <= 0) stop("invalid arguments. sd_c must be > 0")
-  if (xylim <= 0) stop("invalid arguments. xylim must be > 0")
   
   # Set random seed to allow reproducibility of simulations 
   set.seed(rand_seed)
   
-  # Randomly select number of parents from Poisson distribution of 
-  # mean mu_p
+  # Randomly select number of parents from Poisson distribution 
+  # of mean mu_p
   num_p <- rpois(1, mu_p)
   
   # Set size of window
   xylim <- 1
   
-  # Randomly generate coordinates for each of the num_p points, with equal 
-  # probability everywhere in the region of [0, xylim] in each direction
+  # Randomly generate coordinates for each of the num_p points, 
+  # with equal probability everywhere in the region of [0, xylim] 
+  # in each direction
   x_p <- runif(num_p, 0, xylim)
   y_p <- runif(num_p, 0, xylim)
   #plot(x_p, y_p, xlim = c(0, xylim), ylim = c(0, xylim))
@@ -669,8 +719,8 @@ ThomasSimul <- function(mu_p, sd_c, rand_seed = 150) {
   # Convert to a spatstat ppp object
   loc_p <- ppp(x_p, y_p, window = owin(c(0, xylim), c(0, xylim)))
   
-  # Calculate the driving intensity using Gaussian densities placed at
-  # each parent location with standard deviation given by sd_c
+  # Calculate the driving intensity using Gaussian densities placed 
+  # at each parent location with standard deviation given by sd_c
   drive_intense <- density(loc_p, sigma = sd_c, kernel = "gaussian")
   
   # Thin this using the thinning function described above
@@ -689,6 +739,7 @@ ThomasSimul <- function(mu_p, sd_c, rand_seed = 150) {
 
 \begin{lstlisting}[language = R]
     
+
 # Description ------
 
 # Script to run the simulations for the first part of the project, 
@@ -705,7 +756,6 @@ sim1 <- ThomasSimul(30, 0.1, rand_seed = 200)
 sim2 <- ThomasSimul(45, 0.05, rand_seed = 465)
 
 # Save plots of these simulations and the driving intensity
-pdf(file = "results/simplots/plot_sim1.pdf")
 plot(sim1$thin_sim, main = "Plot of the First Simulation from a 
      Thomas Cluster Process")
 
@@ -714,30 +764,130 @@ plot(sim1$intense, main = "Plot of the Driving Intensity for the
 
 plot(sim2$thin_sim, main = "Plot of the Second Simulation from a 
      Thomas Cluster Process")
-     
+
 plot(sim2$intense, main = "Plot of the Driving Intensity for the 
      Second Simulation from a Thomas Cluster Process")
 
-## Clip to window ##
+# Clip to Nominal Window ------
 
-thom_sim1 <- thomas.estK(sim1$thin_sim, 
-                         startpar = c(kappa = 30, scale = 0.1))
-mat_sim1 <- matclust.estK(sim1$thin_sim, 
-                         startpar = c(kappa = 30, scale = 0.1))
+# For simulation 1 clip to [0.2, 0.8] on each axis
+
+# Get vector of indicies to remove
+indremove <- NULL
+
+for (i in 1:length(sim1$thin_sim$x)) {
+  
+  xi <- sim1$thin_sim$x[i]
+  yi <- sim1$thin_sim$y[i]
+  
+  if (xi < 0.2 | xi > 0.8) {
+    
+    indremove <- c(indremove, i) 
+    
+  } else if (yi < 0.2 | yi > 0.8) {
+    
+    indremove <- c(indremove, i)
+    
+  }
+  
+}
+
+# Remove from ppp object
+sim1$thin_sim$x <- sim1$thin_sim$x[-indremove]
+sim1$thin_sim$y <- sim1$thin_sim$y[-indremove]
+
+plot(sim1$thin_sim, main = "Plot of the First Simulation Clipped")
+
+# For simulation 2 clip to [0.10, 0.90] on each axis
+
+# Get vector of indicies to remove
+indremove2 <- NULL
+
+for (i in 1:length(sim2$thin_sim$x)) {
+  
+  xi <- sim2$thin_sim$x[i]
+  yi <- sim2$thin_sim$y[i]
+  
+  if (xi < 0.1 | xi > 0.9) {
+    
+    indremove2 <- c(indremove2, i) 
+    
+  } else if (yi < 0.1 | yi > 0.9) {
+    
+    indremove2 <- c(indremove2, i)
+    
+  }
+  
+}
+
+# Remove from ppp object
+sim2$thin_sim$x <- sim2$thin_sim$x[-indremove2]
+sim2$thin_sim$y <- sim2$thin_sim$y[-indremove2]
+
+plot(sim2$thin_sim, main = "Plot of the Second Simulation Clipped")
+
+# Fit models ------
+
+thom_sim1 <- kppm(sim1$thin_sim, 
+                  clusters = "Thomas", 
+                  method = "mincon")
+mat_sim1 <- kppm(sim1$thin_sim, 
+                 clusters = "MatClust", 
+                 method = "mincon")
 
 thom_sim2 <- kppm(sim2$thin_sim, 
-                  clusters = "Thomas", method = "mincon")
+                  clusters = "Thomas", 
+                  method = "mincon")
 mat_sim2 <- kppm(sim2$thin_sim, 
-                 clusters = "MatClust", method = "mincon")
+                 clusters = "MatClust", 
+                 method = "mincon")
+
+
+datPCF_tom1 <- pcfinhom(sim1$thin_sim, 
+                        thom_sim1, 
+                        correction = "translate")
+datPCF_sim_tom1 <- pcfinhom(simulate(thom_sim1, nsim = 1)[[1]], 
+                            thom_sim1, 
+                            correction = "translate")
+
+datPCF_mat1 <- pcfinhom(sim1$thin_sim, 
+                        mat_sim1, 
+                        correction = "translate")
+datPCF_sim_mat1 <- pcfinhom(simulate(mat_sim1, nsim = 1)[[1]], 
+                            mat_sim1, 
+                            correction = "translate")
+
+datPCF_tom2 <- pcfinhom(sim2$thin_sim, 
+                        thom_sim2, 
+                        correction = "translate")
+datPCF_sim_tom2 <- pcfinhom(simulate(thom_sim2, nsim = 1)[[1]], 
+                            thom_sim2, 
+                            correction = "translate")
+
+datPCF_mat2 <- pcfinhom(sim1$thin_sim, 
+                        mat_sim2, 
+                        correction = "translate")
+datPCF_sim_mat2 <- pcfinhom(simulate(mat_sim2, nsim = 1)[[1]], 
+                            mat_sim2, 
+                            correction = "translate")
+
+par(mfrow = c(2, 3))
+plot(datPCF_tom1, main = "Real Data (1)")
+plot(datPCF_sim_tom1, main = "Thomas (1)")
+plot(datPCF_sim_mat1, main = "Matern (1)")
+plot(datPCF_tom2, main = "Real Data (2)")
+plot(datPCF_sim_tom2, main = "Thomas (2)")
+plot(datPCF_sim_mat2, main = "Matern (2)")
 
 \end{lstlisting}
 
-\vspace{15cm}
+%\vspace{15cm}
 
 \section{Model Fitting Code}
 \label{section:modelling}
 
 \begin{lstlisting}[language = R]
+
 
 # Description ------
 
@@ -762,27 +912,24 @@ set.seed(150)
 initial_est <- density(dat)
 
 # Save plot of this intensity
-
 plot(initial_est, 
      main = "Initial intensity Estimate Using Function Defaults")
 
-
-# Default kernel is Gaussian so this is use since it hasn't been 
-# overridden
+# Default kernel is Gaussian so this is use since it 
+# hasn't been overridden
 
 # the bandwidth sigma is found by a "simple rule of thumb" 
 # relating only to the size of the window (assuming some 
 # 0.1 * shortest side length)
 
-# Fit densities with a large and small bandwidth to give markedly
-# different estimates of the intensity
+# Fit densities with a large and small bandwidth to give 
+# markedly different estimates of the intensity
 large_band <- density(dat, sigma = 200)
 small_band <- density(dat, sigma = 20)
 
 plot(large_band)
 
 plot(small_band)
-
 
 # Fit Models Using ppm for x and y ------
 
@@ -807,16 +954,16 @@ plot(density(dat, sigma = 50))
 plot(predict(mod_poly6_xy), 
      main = "Model Fitted with Polynomial of Degree 6")
 
-
-datPCF_x <- pcfinhom(dat, mod_poly6_xy, 
+datPCF_x <- pcfinhom(dat, 
+                     mod_poly6_xy, 
                      correction = "translate")
 datPCF_sim_x <- pcfinhom(simulate(mod_poly6_xy, nsim = 1)[[1]],
-                         mod_poly6_xy, correction = "translate")
+                         mod_poly6_xy, 
+                         correction = "translate")
 
 plot(datPCF_x, main = "Real Data")
 
 plot(datPCF_sim_x, main = "Simulated Data")
-
 
 # Fit Models Using ppm for Elevation and Gradient ------
 
@@ -828,32 +975,38 @@ mod_g_e <- ppm(dat ~ elev + grad, data = dat_extra)
 
 mod_ge <- ppm(dat ~ elev * grad, data = dat_extra)
 
-plot(predict(mod_ge), main = "Model Fitted with the Interaction Term")
+plot(predict(mod_ge), 
+     main = "Model Fitted with the Interaction Term")
 
-
-datPCF <- pcfinhom(dat, mod_ge, correction = "translate")
+datPCF <- pcfinhom(dat, 
+                   mod_ge, 
+                   correction = "translate")
 datPCF_sim <- pcfinhom(simulate(mod_ge, nsim = 1)[[1]], 
-                       mod_ge, correction = "translate")
+                       mod_ge, 
+                       correction = "translate")
 
 plot(datPCF, main = "Real Data")
 
 plot(datPCF_sim, main = "Simulated Data")
 
-
 # Fit Thomas Models ------
 
 mod_tom <- kppm(dat ~ poly(x, 6) + poly(y, 6), 
-                clusters = "Thomas", method = "palm")
+                clusters = "Thomas", 
+                method = "palm")
 
-plot(predict(mod_tom), main = "Thomas Cluster Model Fitted 
-     with Polynomial of Degree 6")
+plot(predict(mod_tom), 
+     main = "Thomas Cluster Model Fitted with Polynomial of Degree 6")
 
 plot(mod_tom, 
      main = "Thomas Cluster Model Fitted with Polynomial of Degree 6 with Data")
 
-datPCF_tom <- pcfinhom(dat, mod_tom, correction = "translate")
+datPCF_tom <- pcfinhom(dat, 
+                       mod_tom, 
+                       correction = "translate")
 datPCF_sim_tom <- pcfinhom(simulate(mod_tom, nsim = 1)[[1]], 
-                           mod_tom, correction = "translate")
+                           mod_tom, 
+                           correction = "translate")
 
 plot(datPCF_tom, main = "Real Data")
 
@@ -867,7 +1020,8 @@ set.seed(500)
 # Simulate from the Thomas model fitted above
 tomsim <- simulate(mod_tom, nsim = 2)
 
-plot(tomsim, main = "Data Simulated from the Thomas Model")
+plot(tomsim, 
+     main = "Data Simulated from the Thomas Model")
 
 # Simulations from the Poisson Model ------
 
@@ -875,7 +1029,8 @@ set.seed(600)
 
 poly6_sim <- simulate(mod_poly6_xy, nsim = 2)
 
-plot(poly6_sim, main = "Data Simulated from the Poisson Process Model")
+plot(poly6_sim, 
+     main = "Data Simulated from the Poisson Process Model")
 
 \end{lstlisting}
 
